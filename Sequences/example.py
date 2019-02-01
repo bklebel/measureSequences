@@ -61,10 +61,10 @@ class Sequence_CryostatGUI(Sequence_runner, AbstractEventhandlingThread):
         """
             wait for the temperature to stabilize
             must block until the temperature has arrived at the specified point!
-            the optional parameter can be whether the corresponding value should 
+            the optional parameter can be whether the corresponding value should
             currently be rising or falling
             direction = 0: default, no information
             direction =  1: temperature should be rising
-            direction = -1: temperature should be falling            
+            direction = -1: temperature should be falling
         """
         raise NotImplementedError

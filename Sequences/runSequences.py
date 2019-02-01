@@ -10,13 +10,20 @@
 # import sys
 # import datetime
 # import pickle
-# import os
 # import re
 import time
 from copy import deepcopy
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
 # from itertools import combinations_with_replacement as comb
+
+# for sequence commands
+import platform
+import os
+try:
+    import winsound
+except ImportError:
+    pass
 
 
 def ScanningN(start, end, N):
@@ -68,24 +75,6 @@ class Sequence_runner(object):
         self.sensor_control = None  # needs to be set!
         self.sensor_sample = None   # needs to be set!
 
-    def setTemperature(self, temperature):
-        """
-            Method to be overridden by a child class
-            here, all logic which is needed to go to a certain temperature
-            needs to be implemented.
-            TODO: override method
-        """
-        raise NotImplementedError
-
-    def scan_T_programSweep(self, temperatures, SweepRate):
-        """
-            Method to be overriden by a child class
-            here, the devices should be programmed to start
-            the respective Sweep
-            temperatures
-        """
-        raise NotImplementedError
-
     def running(self):
         # self.temp_setpoint = 0
         with self.lock:
@@ -97,56 +86,77 @@ class Sequence_runner(object):
 
     def execute_sequence_entry(self, entry):
         if self._isRunning:
+
+            if entry['typ'] == 'Shutdown':
+                self.Shutdown()
+            if entry['typ'] == 'Wait':
+                self.execute_waiting(**entry)
+            if entry['typ'] == 'chamber_operation':
+                self.execute_chamber(**entry)
+            if entry['typ'] == 'beep':
+                self.execute_beep(**entry)
             if entry['typ'] == 'scan_T':
                 self.scan_T_execute(**entry)
 
-            if entry['typ'] == 'Wait':
-                self.execute_waiting(**entry)
-
-            if entry['typ'] == 'chamber_operation':
+            if entry['typ'] == 'scan_H':
+                # has yet to be implemented!
                 pass
+            if entry['typ'] == 'scan_time':
+                # has yet to be implemented!
+                pass
+            if entry['typ'] == 'scan_position':
+                # has yet to be implemented!
+                pass
+
             if entry['typ'] == 'set_T':
+                # has yet to be implemented!
                 pass
             if entry['typ'] == 'set_Field':
+                # has yet to be implemented!
                 pass
             if entry['typ'] == 'chain sequence':
+                # has yet to be implemented!
                 pass
-            if entry['typ'] == 'change datafile':
+            if entry['typ'] == 'res_change_datafile':
+                # has yet to be implemented!
                 pass
-            if entry['typ'] == 'datafilecomment':
+            if entry['typ'] == 'res_datafilecomment':
+                # has yet to be implemented!
                 pass
             if entry['typ'] == 'res_measure':
+                # has yet to be implemented!
                 pass
-            if entry['typ'] == '':
+            if entry['typ'] == 'res_scan_excitation':
+                # has yet to be implemented!
                 pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
-                pass
-            if entry['typ'] == '':
+
+            if entry['typ'] == 'remark':
+                # true pass statement
                 pass
         else:
             raise BreakCondition
+
+    def execute_chamber(self, operation):
+        """execute the specified chamber operation"""
+        if operation == 'seal immediate':
+            self.execute_chamber_seal()
+
+        if operation == 'purge then seal':
+            self.execute_chamber_purge()
+            self.execute_chamber_seal()
+
+        if operation == 'vent then seal':
+            self.execute_chamber_vent()
+            self.execute_chamber_seal()
+
+        if operation == 'pump continuous':
+            self.execute_chamber_continuous('pumping')
+
+        if operation == 'vent continuous':
+            self.execute_chamber_continuous('venting')
+
+        if operation == 'high vacuum':
+            self.execute_chamber_high_vacuum()
 
     def execute_waiting(self, Temp, Field, Position, Chamber, Delay, **kwargs):
         if Temp:
@@ -163,6 +173,34 @@ class Sequence_runner(object):
                           getfunc=self.getChamber, threshold=0)
         time.sleep(Delay)
 
+    def execute_beep(self, length, frequency):
+        """beep for a certain time at a certain frequency
+
+        controlelled beep available on windows and linux, not on mac
+
+        length in seconds
+        frequency in Hertz
+        """
+        if platform.system() == 'Windows':
+            winsound.Beep(frequency, length * 1e3)
+        if platform.system() == 'Linux':
+            answer = os.system('beep -f 165.4064 -l 1000')
+            if answer:
+                print('\a')  # ring the command lin bell
+                self.message_to_user(
+                    'The program "beep" had a problem. Maybe it is not installed?')
+        if platform.system() == 'Darwin':
+            print('\a')
+            self.message_to_user(
+                'no easily controllable beep function on mac available')
+
+    def message_to_user(self, message):
+        """deliver a message to a user in some way
+
+        default is printing to the command line
+        """
+        print(message)
+
     def scan_T_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
 
         temperatures, stepsize = ScanningN(start=start,
@@ -170,10 +208,7 @@ class Sequence_runner(object):
                                            N=Nsteps)
 
         if ApproachMode == "No O'Shoot":
-            ApproachMode = 'Sweep'
-            SweepRate = 0.1  # supposed minimum
-            self.sig_assertion.emit(
-                'Sequence: Tscan: Mode not impelemented yet! \n I am using a super-slow sweep instead!')
+            raise NotImplementedError
 
         if ApproachMode == 'Fast':
             for temp_setpoint_sample in temperatures:
@@ -192,9 +227,10 @@ class Sequence_runner(object):
         if ApproachMode == 'Sweep':
             pass
             # program VTI sweep, in accordance to the VTI Offset
+            self.scan_T_programSweep(temperatures, SweepRate)
             # set temp and RampRate for Lakeshore
             # if T_sweepentry is arrived: do stuff
-            for temp_setpoint_sample in temperatures:
+            for temp in temperatures:
                 # do checking and so on
                 for entry in commands:
                     self.execute_sequence_entry(entry)
@@ -217,8 +253,26 @@ class Sequence_runner(object):
             time.sleep(0.1)
 
     def stop(self):
-        """stop the sequence execution by setting self.__isRunning to False"""
+        """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
+
+    def scan_T_programSweep(self, temperatures, SweepRate):
+        """
+            Method to be overriden by a child class
+            here, the devices should be programmed to start
+            the respective Sweep
+            temperatures
+        """
+        raise NotImplementedError
+
+    def setTemperature(self, temperature):
+        """
+            Method to be overridden by a child class
+            here, all logic which is needed to go to a certain temperature
+            needs to be implemented.
+            TODO: override method
+        """
+        raise NotImplementedError
 
     def getTemperature(self):
         """Read the temperature
@@ -265,5 +319,44 @@ class Sequence_runner(object):
             direction = 0: default, no information
             direction =  1: temperature should be rising
             direction = -1: temperature should be falling
+        """
+        raise NotImplementedError
+
+    def Shutdown(self):
+        """Shut down instruments to a standby-configuration"""
+        raise NotImplementedError
+
+    def execute_chamber_purge(self):
+        """purge the chamber
+
+        must block until the chamber is purged
+        """
+        raise NotImplementedError
+
+    def execute_chamber_vent(self):
+        """vent the chamber
+
+        must block until the chamber is vented
+        """
+        raise NotImplementedError
+
+    def execute_chamber_seal(self):
+        """seal the chamber
+
+        must block until the chamber is sealed
+        """
+        raise NotImplementedError
+
+    def execute_chamber_continuous(self, action):
+        """pump or vent the chamber continuously"""
+        if action == 'pumping':
+            raise NotImplementedError
+        if action == 'venting':
+            raise NotImplementedError
+
+    def execute_chamber_high_vacuum(self):
+        """pump the chamber to high vacuum
+
+        must block until the chamber is  at high vacuum
         """
         raise NotImplementedError

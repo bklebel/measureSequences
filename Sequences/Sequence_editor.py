@@ -207,7 +207,7 @@ def parse_chain_sequence(comm, nesting_level):
 def parse_res_change_datafile(comm, nesting_level):
     """parse a command to change the datafile"""
     file = searchf_string.findall(comm)
-    return dict(typ='change datafile', new_file_data=file,
+    return dict(typ='res_change_datafile', new_file_data=file,
                 mode='a' if comm[-1] == '1' else 'w',
                 # a - appending, w - writing, can be inserted
                 # directly into opening statement
@@ -219,7 +219,7 @@ def parse_res_change_datafile(comm, nesting_level):
 def parse_res_datafilecomment(comm, nesting_level):
     """parse a command to write a comment to the datafile"""
     comment = searchf_string.findall(comm)[0]
-    dic = dict(typ='datafilecomment',
+    dic = dict(typ='res_datafilecomment',
                comment=comment,
                DisplayText=textnesting * nesting_level +
                'Datafile Comment: {}'.format(comment))
@@ -288,8 +288,11 @@ def parse_res_scan_excitation(comm, nesting_level):
     n_steps = nums[12]
     reading_count = nums[13]
     bridge_setup = parse_res_bridge_setup(nums[15:35])
-    data = dict(scan_setup=scan_setup, bridge_setup=bridge_setup,
-                dataflags=dataflags, n_steps=n_steps,
+    data = dict(typ='res_scan_excitation',
+                scan_setup=scan_setup,
+                bridge_setup=bridge_setup,
+                dataflags=dataflags,
+                n_steps=n_steps,
                 reading_count=reading_count)
     data['DisplayText'] = textnesting * \
         nesting_level + displatext_res_scan_exc(data)
@@ -957,6 +960,8 @@ class Sequence_builder(Window_ui):
             # print('I found res_scan_excitation')
             dic = parse_res_scan_excitation(line, self.nesting_level)
         elif line_found[8]:
+            # Shutdown to a standby configuration
+            # print('I found Shutdown')
             dic = dict(typ='Shutdown')
         elif line_found[9]:
             # end of a scan
