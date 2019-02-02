@@ -194,7 +194,8 @@ class Sequence_runner(object):
             self.message_to_user(
                 'no easily controllable beep function on mac available')
 
-    def message_to_user(self, message):
+    @staticmethod
+    def message_to_user(message):
         """deliver a message to a user in some way
 
         default is printing to the command line

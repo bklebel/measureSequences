@@ -27,17 +27,11 @@ from qlistmodel import ScanListModel
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
 searchf_string = re.compile(r'''["']{2}(.*?)["']{2}''')
-textnesting = '   '
 
 
 class EOSException(Exception):
     """Exception to raise if an EOS was encountered"""
     pass
-
-
-def read_nums(comm):
-    """convert a string of numbers into a list of floats"""
-    return [float(x) for x in searchf_number.findall(comm)]
 
 
 def parse_binary(number):
@@ -51,370 +45,6 @@ def parse_binary(number):
     for ct, num in enumerate(nums):
         nums[ct] = True if int(num) else False
     return nums
-
-
-def parse_binary_dataflags(number):
-    """parse flags what to store"""
-    nums = parse_binary(number)
-    names = ['General Status', 'Temperature',
-             'Magnetic Field', 'Sample Position',
-             'Chan 1 Resistivity', 'Chan 1 Excitation',
-             'Chan 2 Resistivity', 'Chan 2 Excitation',
-             'Chan 3 Resistivity', 'Chan 3 Excitation',
-             'Chan 4 Resistivity', 'Chan 4 Excitation']
-    empty = [False for x in names]
-    bare = dict(zip(names, empty))
-    bare.update(dict(zip(names, nums)))
-    return bare
-
-
-def displaytext_waiting(data):
-    """generate the displaytext for the wait function"""
-    string = 'Wait for '
-    separator = ', ' if data['Temp'] and data['Field'] else ''
-    sep_taken = False
-
-    if data['Temp']:
-        string += 'Temperature' + separator
-        sep_taken = True
-    if data['Field']:
-        string = string + 'Field' if sep_taken else string + 'Field' + separator
-        sep_taken = True
-    string += ' & {} seconds more'.format(data['Delay'])
-    return string
-
-
-def displaytext_scan_T(data):
-    """generate the displaytext for the temperature scan"""
-    # if data['ApproachMode'] == 0:
-    #     mode = 'Fast Settle (single Set Temperature)'
-    # if data['ApproachMode'] == 1:
-    #     mode = "No o'shoot (slow - not yet implemented!)"
-    #     raise NotImplementedError('There is no "No o\'shoot" mode yet!')
-    # if data['ApproachMode'] == 2:
-    #     mode = 'Sweep'
-
-    return 'Scan Temperature from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}'.format(**data)
-
-
-def displaytext_scan_H(data):
-    """generate the displaytext for the field scan"""
-
-    return 'Scan Field from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}, {EndMode}'.format(**data)
-
-
-def displaytext_set_temp(data):
-    """generate the displaytext for a set temperature"""
-    return 'Set Temperature to {Temp} at {SweepRate}K/min (rate is only a wish...)'.format(**data)
-
-
-def displatext_res_scan_exc(data):
-    """generate the displaytext for an excitation scan"""
-    # TODO - finish this up
-    return 'Scanning RES Excitation'
-
-
-def displaytext_res(data):
-    """generate the displaytext for the resistivity measurement"""
-    # TODO - finish this up
-    text = 'Resistivity '
-    chans = []
-    chans.append('Ch1 ')
-    chans.append('Ch2 ')
-    chans.append('Ch3 ')
-    chans.append('Ch4 ')
-
-    for ct, chan_conf in enumerate(data['bridge_conf']):
-        if chan_conf['on_off'] is False:
-            chans[ct] += 'Off, '
-            continue
-        chans[ct] += '{limit_current_uA}uA, '.format(**chan_conf)
-    chans[-1].strip(',')
-    for c in chans:
-        text += c
-    return text
-
-
-def displaytext_set_field(data):
-    """generate the displaytext for a set field"""
-    return 'Set Field to {Field} at {SweepRate}T/min (rate is only a wish...)'.format(**data)
-
-
-def parse_chamber(comm, nesting_level):
-    '''parse a command for a chamber operation'''
-    nums = read_nums(comm)
-    dic = dict(typ='chamber_operation')
-    if nums[0] == 0:
-        dic['operation'] = 'seal immediate'
-    if nums[0] == 1:
-        dic['operation'] = 'purge then seal'
-    if nums[0] == 2:
-        dic['operation'] = 'vent then seal'
-    if nums[0] == 3:
-        dic['operation'] = 'pump continuous'
-    if nums[0] == 4:
-        dic['operation'] = 'vent continuous'
-    if nums[0] == 5:
-        dic['operation'] = 'high vacuum'
-
-    dic['DisplayText'] = textnesting * nesting_level + \
-        'Chamber Op: {operation}'.format(**dic)
-    return dic
-
-
-def parse_set_temp(comm, nesting_level):
-    """parse a command to set a single temperature"""
-    # TODO: Fast settle
-    nums = read_nums(comm)
-    dic = dict(typ='set_T', Temp=nums[0], SweepRate=nums[1])
-    dic['DisplayText'] = textnesting * \
-        nesting_level + displaytext_set_temp(dic)
-    return dic
-
-
-def parse_set_field(comm, nesting_level):
-    """parse a command to set a single field"""
-    nums = read_nums(comm)
-    dic = dict(typ='set_Field', Field=nums[0], SweepRate=nums[1])
-    dic['DisplayText'] = textnesting * \
-        nesting_level + displaytext_set_field(dic)
-    return dic
-
-
-def parse_waiting(comm, nesting_level):
-    """parse a command to wait for certain values"""
-    nums = read_nums(comm)
-    dic = dict(typ='Wait',
-               Temp=bool(int(nums[1])),
-               Field=bool(int(nums[2])),
-               Position=bool(int(nums[3])),
-               Chamber=bool(int(nums[4])),
-               Delay=nums[0])
-    dic['DisplayText'] = textnesting * nesting_level + displaytext_waiting(dic)
-    return dic
-    # dic.update(local_dic.update(dict(DisplayText=self.parse_waiting(local_dic))))
-
-
-def parse_chain_sequence(comm, nesting_level):
-    """parse a command to chain a sequence file"""
-    file = comm[4:]
-    return dict(typ='chain sequence', new_file_seq=file,
-                DisplayText=textnesting * nesting_level + 'Chain sequence: {}'.format(comm))
-    # print('CHN', comm, dic)
-    # return dic
-
-
-def parse_res_change_datafile(comm, nesting_level):
-    """parse a command to change the datafile"""
-    file = searchf_string.findall(comm)
-    return dict(typ='res_change_datafile', new_file_data=file,
-                mode='a' if comm[-1] == '1' else 'w',
-                # a - appending, w - writing, can be inserted
-                # directly into opening statement
-                DisplayText=textnesting * nesting_level + 'Change data file: {}'.format(file))
-    # print('CDF', comm, dic)
-    # return dic
-
-
-def parse_res_datafilecomment(comm, nesting_level):
-    """parse a command to write a comment to the datafile"""
-    comment = searchf_string.findall(comm)[0]
-    dic = dict(typ='res_datafilecomment',
-               comment=comment,
-               DisplayText=textnesting * nesting_level +
-               'Datafile Comment: {}'.format(comment))
-    return dic
-
-
-def parse_res_bridge_setup(nums):
-    """parse the res bridge setup for an excitation scan"""
-    bridge_setup = []
-    bridge_setup.append(nums[:5])
-    bridge_setup.append(nums[5:10])
-    bridge_setup.append(nums[10:15])
-    bridge_setup.append(nums[15:20])
-    for ct, channel in enumerate(bridge_setup):
-        bridge_setup[ct] = dict(limit_power_uW=channel[
-                                1], limit_voltage_mV=channel[4])
-        bridge_setup[ct]['ac_dc'] = 'AC' if channel[2] == 0 else 'DC'
-        bridge_setup[ct]['on_off'] = True if channel[0] == 2 else False
-        bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
-            3] == 0 else 'Fast'
-    return bridge_setup
-
-
-def parse_res(comm, nesting_level):
-    """parse a command to measure resistivity"""
-    nums = read_nums(comm)
-    dataflags = parse_binary_dataflags(int(nums[0]))
-    reading_count = nums[1]
-    nums = nums[2:]
-    bridge_conf = []
-    bridge_conf.append(nums[:6])
-    bridge_conf.append(nums[6:12])
-    bridge_conf.append(nums[12:18])
-    bridge_conf.append(nums[18:24])
-    for ct, channel in enumerate(bridge_conf):
-        bridge_conf[ct] = dict(limit_power_uW=channel[2], limit_current_uA=channel[
-                               1], limit_voltage_mV=channel[5])
-        bridge_conf[ct]['on_off'] = True if channel[0] == 2 else False
-        bridge_conf[ct]['ac_dc'] = 'AC' if channel[3] == 0 else 'DC'
-        bridge_conf[ct]['calibration_mode'] = 'Standard' if channel[
-            4] == 0 else 'Fast'
-    data = dict(typ='res_measure', dataflags=dataflags, reading_count=reading_count,
-                bridge_conf=bridge_conf)
-    data['DisplayText'] = textnesting * nesting_level + displaytext_res(data)
-    return data
-
-
-def parse_res_scan_excitation(comm, nesting_level):
-    """parse a command to do an excitation scan"""
-    nums = read_nums(comm)
-    scan_setup = []
-    scan_setup.append(nums[:3])  # 1
-    scan_setup.append(nums[3:6])  # 2
-    scan_setup.append(nums[6:9])  # 3
-    scan_setup.append(nums[9:12])  # 4
-    for ct, channel in enumerate(scan_setup):
-        scan_setup[ct] = dict(start=channel[0], end=[channel[1]])
-        if channel[-1] == 0:
-            scan_setup[ct]['Spacing'] = 'linear'
-        if channel[-1] == 1:
-            scan_setup[ct]['Spacing'] = 'log'
-        if channel[-1] == 2:
-            scan_setup[ct]['Spacing'] = 'power'
-
-    dataflags = parse_binary_dataflags(nums[14])
-    n_steps = nums[12]
-    reading_count = nums[13]
-    bridge_setup = parse_res_bridge_setup(nums[15:35])
-    data = dict(typ='res_scan_excitation',
-                scan_setup=scan_setup,
-                bridge_setup=bridge_setup,
-                dataflags=dataflags,
-                n_steps=n_steps,
-                reading_count=reading_count)
-    data['DisplayText'] = textnesting * \
-        nesting_level + displatext_res_scan_exc(data)
-    return data
-
-
-def parse_scan_T(comm, nesting_level):
-    """parse a command to do a temperature scan"""
-    temps = read_nums(comm)
-    # temps are floats!
-    if len(temps) < 6:
-        raise AssertionError(
-            'not enough specifying numbers for T-scan!')
-
-    dic = dict(typ='scan_T', start=temps[0],
-               end=temps[1],
-               SweepRate=temps[2],
-               Nsteps=temps[3],
-               SpacingCode=temps[4],
-               ApproachMode=temps[5])
-    if int(temps[4]) == 0:
-        dic['SpacingCode'] = 'uniform'
-    elif int(temps[4]) == 1:
-        dic['SpacingCode'] = '1/T'
-    elif int(temps[4]) == 2:
-        dic['SpacingCode'] = 'logT'
-
-    if int(temps[5]) == 0:
-        dic['ApproachMode'] = 'Fast'
-    elif int(temps[5]) == 1:
-        dic['ApproachMode'] = 'No O\'Shoot'
-    elif int(temps[5]) == 2:
-        dic['ApproachMode'] = 'Sweep'
-    dic['DisplayText'] = textnesting * nesting_level + displaytext_scan_T(dic)
-    return dic
-
-
-def parse_scan_H(comm, nesting_level):
-    '''parse a command to do a field scan'''
-    numbers = read_nums(comm)
-    if len(numbers) < 7:
-        raise AssertionError('not enough specifying numbers for H-scan!')
-
-    dic = dict(typ='scan_H',
-               start=numbers[0],
-               end=numbers[1],
-               SweepRate=numbers[2],
-               Nsteps=numbers[3])
-    if int(numbers[4]) == 0:
-        dic['SpacingCode'] = 'uniform'
-    elif int(numbers[4]) == 1:
-        dic['SpacingCode'] = 'H*H'
-    elif int(numbers[4]) == 2:
-        dic['SpacingCode'] = 'H^1/2'
-    elif int(numbers[4]) == 3:
-        dic['SpacingCode'] = '1/H'
-    elif int(numbers[4]) == 4:
-        dic['SpacingCode'] = 'logH'
-
-    if int(numbers[5]) == 0:
-        dic['ApproachMode'] = 'linear'
-    if int(numbers[5]) == 1:
-        dic['ApproachMode'] = 'No O\'Shoot'
-    if int(numbers[5]) == 2:
-        dic['ApproachMode'] = 'oscillate'
-    if int(numbers[5]) == 3:
-        dic['ApproachMode'] = 'sweep'
-
-    if int(numbers[6]) == 0:
-        dic['EndMode'] = 'persistent'
-    if int(numbers[6]) == 1:
-        dic['EndMode'] = 'driven'
-    dic['DisplayText'] = textnesting * nesting_level + displaytext_scan_H(dic)
-    return dic
-
-
-def parse_scan_time(comm, nesting_level):
-    nums = read_nums(comm)
-    if len(nums) < 3:
-        raise AssertionError('not enough specifying numbers for time-scan!')
-
-    dic = dict(typ='scan_time', time=nums[0], Nsteps=nums[1])
-
-    if int(nums[2]) == 0:
-        dic['SpacingCode'] = 'uniform'
-    if int(nums[2]) == 1:
-        dic['SpacingCode'] = 'ln(t)'
-
-    dic['DisplayText'] = textnesting * nesting_level + \
-        'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'
-    return dic
-
-
-def parse_scan_P(comm, nesting_level):
-    nums = read_nums(comm)
-    if len(nums) < 3:
-        raise AssertionError(
-            'not enough specifying numbers for position-scan!')
-
-    dic = dict(typ='scan_position',
-               start=nums[0],
-               end=nums[1],
-               speedindex=nums[2],
-               Nsteps=nums[3])
-
-    dic['ApproachMode'] = 'Sweep' if len(nums) > 3 else 'Pause'
-    dic['DisplayText'] = textnesting * nesting_level + \
-        'Scan Position from {start} to {end} in {Nsteps} steps, {speedindex}, {ApproachMode} '.format(
-            **dic)
-    return dic
-
-
-def parse_beep(comm, nesting_level):
-    '''parse a command to beep for a certain time at a certain frequency'''
-    nums = read_nums(comm)
-    if len(nums) < 2:
-        raise AssertionError('not enough specifying numbers for beep!')
-
-    dic = dict(typ='beep', length=nums[0], frequency=nums[1])
-    dic['DisplayText'] = textnesting * nesting_level + \
-        'Beep for {length}secs at {frequency}Hz'.format(**dic)
-    return dic
 
 
 class Window_ChangeDataFile(QtWidgets.QDialog):
@@ -665,7 +295,7 @@ class Sequence_builder(Window_ui):
     sig_runSequence = pyqtSignal(list)
     sig_abortSequence = pyqtSignal()
 
-    def __init__(self, sequence_file=None, parent=None, **kwargs):
+    def __init__(self, sequence_file=None, parent=None, textnesting='   ', **kwargs):
         super().__init__(
             ui_file='.\\configurations\\sequence.ui', **kwargs)
 
@@ -697,6 +327,8 @@ class Sequence_builder(Window_ui):
         # self.model.sig_send.connect(self.saving)
         # self.treeOptions.itemDoubleClicked['QTreeWidgetItem*', 'int'].connect(lambda value: self.listSequence.repaint())
         self.show()
+
+        self.textnesting = textnesting
 
     def init_data(self):
         self.data = []
@@ -763,21 +395,6 @@ class Sequence_builder(Window_ui):
             pickle.dump(self.data, output, pickle.HIGHEST_PROTOCOL)
         with open(self.sequence_file_json, 'w') as output:
             output.write(json.dumps(self.data))
-        # with open(self.sequence_file, 'w') as f:
-        #     for entry in data:
-        #         print(entry)
-        #         if entry['typ'] == 'scan_T':
-        #             f.write('LPT SCANT {start} {end} {SweepRate} {Nsteps} {SpacingCode} {ApproachMode}\n'.format(
-        #                 **entry))  # TODO: make sure Rampcondition is actually where it is!
-        #             for command in entry['commands']:
-        #                 f.write(
-        #                     '{measuretype} 00 00 00 11 11 00\n'.format(**command))
-        #             f.write('ENT EOS\n')
-        #         if entry['typ'] == 'Wait':
-        #             Temp = 1 if entry['Temp'] else 0
-        #             Field = 1 if entry['Field'] else 0
-        #             f.write('WAI WAITFOR {Delay} {Temp} {Field}\n'.format(
-        #                 Delay=entry['Delay'], Temp=Temp, Field=Field))
 
     def initialize_all_windows(self):
         self.initialise_window_waiting()
@@ -817,12 +434,6 @@ class Sequence_builder(Window_ui):
         self.sequence_file = fname
         self.sequence_file_p = self.sequence_file[:-3] + 'pkl'
         self.sequence_file_json = self.sequence_file[:-3] + 'json'
-
-    # def update_filelocation(self):
-    #     try:
-    #         self.lineFileLocation.setText(self.sequence_file)
-    #     finally:
-        # QTimer.singleShot(0, update_filelocation)
 
     def initialize_sequence(self, sequence_file):
         """parse a complete file of instructions"""
@@ -893,7 +504,7 @@ class Sequence_builder(Window_ui):
             except EOSException:
                 self.nesting_level -= 1
                 dic_loop = dict(
-                    typ="EOS", DisplayText=textnesting * (self.nesting_level) + 'EOS')
+                    typ="EOS", DisplayText=self.textnesting * (self.nesting_level) + 'EOS')
                 commands.append(dic_loop)
                 break
             if dic_loop is not None:
@@ -929,11 +540,11 @@ class Sequence_builder(Window_ui):
         if line_found[0]:
             # set temperature
             # print('I found set_temp')
-            dic = parse_set_temp(line, self.nesting_level)
+            dic = self.parse_set_temp(line)
         elif line_found[1]:
             # set field
             # print('I found set_field')
-            dic = parse_set_field(line, self.nesting_level)
+            dic = self.parse_set_field(line)
         elif line_found[2]:
             # scan something
             # print('I found a scan ')
@@ -942,23 +553,23 @@ class Sequence_builder(Window_ui):
         elif line_found[3]:
             # waitfor
             # print('I found waiting')
-            dic = parse_waiting(line, self.nesting_level)
+            dic = self.parse_waiting(line)
         elif line_found[4]:
             # chain sequence
             # print('I found chain_sequence')
-            dic = parse_chain_sequence(line, self.nesting_level)
+            dic = self.parse_chain_sequence(line)
         elif line_found[5]:
             # resistivity change datafile
             # print('I found res_change_datafile')
-            dic = parse_res_change_datafile(line, self.nesting_level)
+            dic = self.parse_res_change_datafile(line)
         elif line_found[6]:
             # resistivity datafile comment
             # print('I found res_datafilecomment')
-            dic = parse_res_datafilecomment(line, self.nesting_level)
+            dic = self.parse_res_datafilecomment(line)
         elif line_found[7]:
             # resistivity scan excitation
             # print('I found res_scan_excitation')
-            dic = parse_res_scan_excitation(line, self.nesting_level)
+            dic = self.parse_res_scan_excitation(line)
         elif line_found[8]:
             # Shutdown to a standby configuration
             # print('I found Shutdown')
@@ -970,13 +581,13 @@ class Sequence_builder(Window_ui):
         elif line_found[10]:
             # resistivity - measure
             # print('I found res meausrement')
-            dic = parse_res(line, self.nesting_level)
+            dic = self.parse_res(line)
         elif line_found[11]:
             # beep of certain length and frequency
-            dic = parse_beep(line, self.nesting_level)
+            dic = self.parse_beep(line)
         elif line_found[12]:
             # chamber operations
-            dic = parse_chamber(line, self.nesting_level)
+            dic = self.parse_chamber(line)
 
         elif line_found[13]:
             # remark
@@ -999,19 +610,19 @@ class Sequence_builder(Window_ui):
         dic = dict(typ=None)
         if line_found[2][0] == 'H':
             # Field
-            dic = parse_scan_H(line, self.nesting_level)
+            dic = self.parse_scan_H(line)
 
         if line_found[2][0] == 'T':
             # temperature
-            dic = parse_scan_T(line, self.nesting_level)
+            dic = self.parse_scan_T(line)
 
         if line_found[2][0] == 'P':
             # position
-            dic = parse_scan_P(line, self.nesting_level)
+            dic = self.parse_scan_P(line)
 
         if line_found[2][0] == 'C':
             # time
-            dic = parse_scan_time(line, self.nesting_level)
+            dic = self.parse_scan_time(line)
 
         self.nesting_level += 1
 
@@ -1019,6 +630,369 @@ class Sequence_builder(Window_ui):
 
         dic.update(dict(commands=commands))
         return dic
+
+    @staticmethod
+    def read_nums(comm):
+        """convert a string of numbers into a list of floats"""
+        return [float(x) for x in searchf_number.findall(comm)]
+
+    @staticmethod
+    def parse_binary_dataflags(number):
+        """parse flags what to store"""
+        nums = parse_binary(number)
+        names = ['General Status', 'Temperature',
+                 'Magnetic Field', 'Sample Position',
+                 'Chan 1 Resistivity', 'Chan 1 Excitation',
+                 'Chan 2 Resistivity', 'Chan 2 Excitation',
+                 'Chan 3 Resistivity', 'Chan 3 Excitation',
+                 'Chan 4 Resistivity', 'Chan 4 Excitation']
+        empty = [False for x in names]
+        bare = dict(zip(names, empty))
+        bare.update(dict(zip(names, nums)))
+        return bare
+
+    @staticmethod
+    def displaytext_waiting(data):
+        """generate the displaytext for the wait function"""
+        string = 'Wait for '
+        separator = ', ' if data['Temp'] and data['Field'] else ''
+        sep_taken = False
+
+        if data['Temp']:
+            string += 'Temperature' + separator
+            sep_taken = True
+        if data['Field']:
+            string = string + 'Field' if sep_taken else string + 'Field' + separator
+            sep_taken = True
+        string += ' & {} seconds more'.format(data['Delay'])
+        return string
+
+    @staticmethod
+    def displaytext_scan_T(data):
+        """generate the displaytext for the temperature scan"""
+        # if data['ApproachMode'] == 0:
+        #     mode = 'Fast Settle (single Set Temperature)'
+        # if data['ApproachMode'] == 1:
+        #     mode = "No o'shoot (slow - not yet implemented!)"
+        #     raise NotImplementedError('There is no "No o\'shoot" mode yet!')
+        # if data['ApproachMode'] == 2:
+        #     mode = 'Sweep'
+
+        return 'Scan Temperature from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}'.format(**data)
+
+    @staticmethod
+    def displaytext_scan_H(data):
+        """generate the displaytext for the field scan"""
+
+        return 'Scan Field from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}, {EndMode}'.format(**data)
+
+    @staticmethod
+    def displaytext_set_temp(data):
+        """generate the displaytext for a set temperature"""
+        return 'Set Temperature to {Temp} at {SweepRate}K/min (rate is only a wish...)'.format(**data)
+
+    @staticmethod
+    def displatext_res_scan_exc(data):
+        """generate the displaytext for an excitation scan"""
+        # TODO - finish this up
+        return 'Scanning RES Excitation'
+
+    @staticmethod
+    def displaytext_res(data):
+        """generate the displaytext for the resistivity measurement"""
+        # TODO - finish this up
+        text = 'Resistivity '
+        chans = []
+        chans.append('Ch1 ')
+        chans.append('Ch2 ')
+        chans.append('Ch3 ')
+        chans.append('Ch4 ')
+
+        for ct, chan_conf in enumerate(data['bridge_conf']):
+            if chan_conf['on_off'] is False:
+                chans[ct] += 'Off, '
+                continue
+            chans[ct] += '{limit_current_uA}uA, '.format(**chan_conf)
+        chans[-1].strip(',')
+        for c in chans:
+            text += c
+        return text
+
+    @staticmethod
+    def displaytext_set_field(data):
+        """generate the displaytext for a set field"""
+        return 'Set Field to {Field} at {SweepRate}T/min (rate is only a wish...)'.format(**data)
+
+    def parse_chamber(self, comm):
+        '''parse a command for a chamber operation'''
+        nums = self.read_nums(comm)
+        dic = dict(typ='chamber_operation')
+        if nums[0] == 0:
+            dic['operation'] = 'seal immediate'
+        if nums[0] == 1:
+            dic['operation'] = 'purge then seal'
+        if nums[0] == 2:
+            dic['operation'] = 'vent then seal'
+        if nums[0] == 3:
+            dic['operation'] = 'pump continuous'
+        if nums[0] == 4:
+            dic['operation'] = 'vent continuous'
+        if nums[0] == 5:
+            dic['operation'] = 'high vacuum'
+
+        dic['DisplayText'] = self.textnesting * self.nesting_level + \
+            'Chamber Op: {operation}'.format(**dic)
+        return dic
+
+    def parse_set_temp(self, comm):
+        """parse a command to set a single temperature"""
+        # TODO: Fast settle
+        nums = self.read_nums(comm)
+        dic = dict(typ='set_T', Temp=nums[0], SweepRate=nums[1])
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_set_temp(dic)
+        return dic
+
+    def parse_set_field(self, comm):
+        """parse a command to set a single field"""
+        nums = self.read_nums(comm)
+        dic = dict(typ='set_Field', Field=nums[0], SweepRate=nums[1])
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_set_field(dic)
+        return dic
+
+    def parse_waiting(self, comm):
+        """parse a command to wait for certain values"""
+        nums = self.read_nums(comm)
+        dic = dict(typ='Wait',
+                   Temp=bool(int(nums[1])),
+                   Field=bool(int(nums[2])),
+                   Position=bool(int(nums[3])),
+                   Chamber=bool(int(nums[4])),
+                   Delay=nums[0])
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + displaytext_waiting(dic)
+        return dic
+        # dic.update(local_dic.update(dict(DisplayText=self.parse_waiting(local_dic))))
+
+    def parse_chain_sequence(self, comm):
+        """parse a command to chain a sequence file"""
+        file = comm[4:]
+        return dict(typ='chain sequence', new_file_seq=file,
+                    DisplayText=self.textnesting * self.nesting_level + 'Chain sequence: {}'.format(comm))
+        # print('CHN', comm, dic)
+        # return dic
+
+    def parse_scan_T(self, comm):
+        """parse a command to do a temperature scan"""
+        temps = self.read_nums(comm)
+        # temps are floats!
+        if len(temps) < 6:
+            raise AssertionError(
+                'not enough specifying numbers for T-scan!')
+
+        dic = dict(typ='scan_T', start=temps[0],
+                   end=temps[1],
+                   SweepRate=temps[2],
+                   Nsteps=temps[3],
+                   SpacingCode=temps[4],
+                   ApproachMode=temps[5])
+        if int(temps[4]) == 0:
+            dic['SpacingCode'] = 'uniform'
+        elif int(temps[4]) == 1:
+            dic['SpacingCode'] = '1/T'
+        elif int(temps[4]) == 2:
+            dic['SpacingCode'] = 'logT'
+
+        if int(temps[5]) == 0:
+            dic['ApproachMode'] = 'Fast'
+        elif int(temps[5]) == 1:
+            dic['ApproachMode'] = 'No O\'Shoot'
+        elif int(temps[5]) == 2:
+            dic['ApproachMode'] = 'Sweep'
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_scan_T(dic)
+        return dic
+
+    def parse_scan_H(self, comm):
+        '''parse a command to do a field scan'''
+        numbers = self.read_nums(comm)
+        if len(numbers) < 7:
+            raise AssertionError('not enough specifying numbers for H-scan!')
+
+        dic = dict(typ='scan_H',
+                   start=numbers[0],
+                   end=numbers[1],
+                   SweepRate=numbers[2],
+                   Nsteps=numbers[3])
+        if int(numbers[4]) == 0:
+            dic['SpacingCode'] = 'uniform'
+        elif int(numbers[4]) == 1:
+            dic['SpacingCode'] = 'H*H'
+        elif int(numbers[4]) == 2:
+            dic['SpacingCode'] = 'H^1/2'
+        elif int(numbers[4]) == 3:
+            dic['SpacingCode'] = '1/H'
+        elif int(numbers[4]) == 4:
+            dic['SpacingCode'] = 'logH'
+
+        if int(numbers[5]) == 0:
+            dic['ApproachMode'] = 'linear'
+        if int(numbers[5]) == 1:
+            dic['ApproachMode'] = 'No O\'Shoot'
+        if int(numbers[5]) == 2:
+            dic['ApproachMode'] = 'oscillate'
+        if int(numbers[5]) == 3:
+            dic['ApproachMode'] = 'sweep'
+
+        if int(numbers[6]) == 0:
+            dic['EndMode'] = 'persistent'
+        if int(numbers[6]) == 1:
+            dic['EndMode'] = 'driven'
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_scan_H(dic)
+        return dic
+
+    def parse_scan_time(self, comm):
+        nums = self.read_nums(comm)
+        if len(nums) < 3:
+            raise AssertionError(
+                'not enough specifying numbers for time-scan!')
+
+        dic = dict(typ='scan_time', time=nums[0], Nsteps=nums[1])
+
+        if int(nums[2]) == 0:
+            dic['SpacingCode'] = 'uniform'
+        if int(nums[2]) == 1:
+            dic['SpacingCode'] = 'ln(t)'
+
+        dic['DisplayText'] = self.textnesting * self.nesting_level + \
+            'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'
+        return dic
+
+    def parse_scan_P(self, comm):
+        nums = self.read_nums(comm)
+        if len(nums) < 3:
+            raise AssertionError(
+                'not enough specifying numbers for position-scan!')
+
+        dic = dict(typ='scan_position',
+                   start=nums[0],
+                   end=nums[1],
+                   speedindex=nums[2],
+                   Nsteps=nums[3])
+
+        dic['ApproachMode'] = 'Sweep' if len(nums) > 3 else 'Pause'
+        dic['DisplayText'] = self.textnesting * self.nesting_level + \
+            'Scan Position from {start} to {end} in {Nsteps} steps, {speedindex}, {ApproachMode} '.format(
+                **dic)
+        return dic
+
+    def parse_beep(self, comm):
+        '''parse a command to beep for a certain time at a certain frequency'''
+        nums = self.read_nums(comm)
+        if len(nums) < 2:
+            raise AssertionError('not enough specifying numbers for beep!')
+
+        dic = dict(typ='beep', length=nums[0], frequency=nums[1])
+        dic['DisplayText'] = self.textnesting * self.nesting_level + \
+            'Beep for {length}secs at {frequency}Hz'.format(**dic)
+        return dic
+
+    def parse_res_change_datafile(self, comm):
+        """parse a command to change the datafile"""
+        file = searchf_string.findall(comm)
+        return dict(typ='res_change_datafile', new_file_data=file,
+                    mode='a' if comm[-1] == '1' else 'w',
+                    # a - appending, w - writing, can be inserted
+                    # directly into opening statement
+                    DisplayText=self.textnesting * self.nesting_level + 'Change data file: {}'.format(file))
+        # print('CDF', comm, dic)
+        # return dic
+
+    def parse_res_datafilecomment(self, comm):
+        """parse a command to write a comment to the datafile"""
+        comment = searchf_string.findall(comm)[0]
+        dic = dict(typ='res_datafilecomment',
+                   comment=comment,
+                   DisplayText=self.textnesting * self.nesting_level +
+                   'Datafile Comment: {}'.format(comment))
+        return dic
+
+    @staticmethod
+    def parse_res_bridge_setup(nums):
+        """parse the res bridge setup for an excitation scan"""
+        bridge_setup = []
+        bridge_setup.append(nums[:5])
+        bridge_setup.append(nums[5:10])
+        bridge_setup.append(nums[10:15])
+        bridge_setup.append(nums[15:20])
+        for ct, channel in enumerate(bridge_setup):
+            bridge_setup[ct] = dict(limit_power_uW=channel[1],
+                                    limit_voltage_mV=channel[4])
+            bridge_setup[ct]['ac_dc'] = 'AC' if channel[2] == 0 else 'DC'
+            bridge_setup[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
+                3] == 0 else 'Fast'
+        return bridge_setup
+
+    def parse_res(self, comm):
+        """parse a command to measure resistivity"""
+        nums = self.read_nums(comm)
+        dataflags = self.parse_binary_dataflags(int(nums[0]))
+        reading_count = nums[1]
+        nums = nums[2:]
+        bridge_conf = []
+        bridge_conf.append(nums[:6])
+        bridge_conf.append(nums[6:12])
+        bridge_conf.append(nums[12:18])
+        bridge_conf.append(nums[18:24])
+        for ct, channel in enumerate(bridge_conf):
+            bridge_conf[ct] = dict(limit_power_uW=channel[2],
+                                   limit_current_uA=channel[1],
+                                   limit_voltage_mV=channel[5])
+            bridge_conf[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_conf[ct]['ac_dc'] = 'AC' if channel[3] == 0 else 'DC'
+            bridge_conf[ct]['calibration_mode'] = 'Standard' if channel[
+                4] == 0 else 'Fast'
+        data = dict(typ='res_measure',
+                    dataflags=dataflags,
+                    reading_count=reading_count,
+                    bridge_conf=bridge_conf)
+        data['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_res(data)
+        return data
+
+    def parse_res_scan_excitation(self, comm):
+        """parse a command to do an excitation scan"""
+        nums = self.read_nums(comm)
+        scan_setup = []
+        scan_setup.append(nums[:3])  # 1
+        scan_setup.append(nums[3:6])  # 2
+        scan_setup.append(nums[6:9])  # 3
+        scan_setup.append(nums[9:12])  # 4
+        for ct, channel in enumerate(scan_setup):
+            scan_setup[ct] = dict(start=channel[0], end=[channel[1]])
+            if channel[-1] == 0:
+                scan_setup[ct]['Spacing'] = 'linear'
+            if channel[-1] == 1:
+                scan_setup[ct]['Spacing'] = 'log'
+            if channel[-1] == 2:
+                scan_setup[ct]['Spacing'] = 'power'
+
+        dataflags = self.parse_binary_dataflags(nums[14])
+        n_steps = nums[12]
+        reading_count = nums[13]
+        bridge_setup = self.parse_res_bridge_setup(nums[15:35])
+        data = dict(typ='res_scan_excitation',
+                    scan_setup=scan_setup,
+                    bridge_setup=bridge_setup,
+                    dataflags=dataflags,
+                    n_steps=n_steps,
+                    reading_count=reading_count)
+        data['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displatext_res_scan_exc(data)
+        return data
 
 
 if __name__ == '__main__':
