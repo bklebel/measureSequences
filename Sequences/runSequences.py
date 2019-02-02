@@ -12,9 +12,9 @@
 # import pickle
 # import re
 import time
-from copy import deepcopy
+# from copy import deepcopy
 import numpy as np
-from numpy.polynomial.polynomial import polyfit
+# from numpy.polynomial.polynomial import polyfit
 # from itertools import combinations_with_replacement as comb
 
 # for sequence commands
@@ -25,31 +25,7 @@ try:
 except ImportError:
     pass
 
-
-def ScanningN(start, end, N):
-    N += 1
-    stepsize = abs(end - start) / (N - 1)
-    stepsize = abs(stepsize) if start < end else -abs(stepsize)
-    seq = []
-    for __ in range(int(N)):
-        seq.append(start)
-        start += stepsize
-    return seq, stepsize
-
-
-def ScanningSize(start, end, parameter):
-    stepsize = abs(parameter) if start < end else -abs(parameter)
-    seq = []
-    if start < end:
-        while start < end:
-            seq.append(start)
-            start += stepsize
-    else:
-        while start > end:
-            seq.append(start)
-            start += stepsize
-    N = len(seq)
-    return seq, N
+# from util import ScanningN
 
 
 class BreakCondition(Exception):
@@ -204,9 +180,15 @@ class Sequence_runner(object):
 
     def scan_T_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
 
-        temperatures, stepsize = ScanningN(start=start,
-                                           end=end,
-                                           N=Nsteps)
+        # spacingcode information not being used!
+        if SpacingCode == 'uniform':
+            temperatures = np.linspace(start, end, Nsteps)
+        elif SpacingCode == '1/T':
+            # needs to be implemented!
+            raise NotImplementedError
+        elif SpacingCode == 'logT':
+            # needs to be implemented!
+            raise NotImplementedError
 
         if ApproachMode == "No O'Shoot":
             raise NotImplementedError
@@ -226,7 +208,6 @@ class Sequence_runner(object):
                     self.execute_sequence_entry(entry)
 
         if ApproachMode == 'Sweep':
-            pass
             # program VTI sweep, in accordance to the VTI Offset
             self.scan_T_programSweep(temperatures, SweepRate)
             # set temp and RampRate for Lakeshore

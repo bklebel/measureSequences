@@ -253,7 +253,8 @@ class Window_Tscan(QtWidgets.QDialog):
         self._LCD_Nsteps = value
         self.__scanconf['Nsteps'] = value
 
-    def printing(self, message):
+    @staticmethod
+    def printing(message):
         print(message)
 
     def setRampCondition(self, value):
@@ -387,6 +388,7 @@ class Sequence_builder(Window_ui):
     def addChangeDataFile(self, data):
         pass
 
+    @staticmethod
     def printing(self, data):
         print(data)
 

@@ -1,36 +1,15 @@
 # from PyQt5 import QtWidgets, QtCore, uic
 import sys
 from copy import deepcopy
-from pickle import dumps, load, loads
+# import numpy as np
+# from pickle import dumps, load, loads
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore
 # import math
 
-
-def ScanningN(start, end, N):
-    N += 1
-    stepsize = abs(end - start) / (N - 1)
-    stepsize = abs(stepsize) if start < end else -abs(stepsize)
-    seq = []
-    for __ in range(int(N)):
-        seq.append(start)
-        start += stepsize
-    return seq, stepsize
-
-
-def ScanningSize(start, end, parameter):
-    stepsize = abs(parameter) if start < end else -abs(parameter)
-    seq = []
-    if start < end:
-        while start < end:
-            seq.append(start)
-            start += stepsize
-    else:
-        while start > end:
-            seq.append(start)
-            start += stepsize
-    N = len(seq)
-    return seq, N
+from util import ScanningN
+# needed for the stepsize
+from util import ScanningSize
 
 
 class SequenceListModel(QtCore.QAbstractListModel):

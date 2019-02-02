@@ -24,7 +24,7 @@ import inspect
 import time
 import numpy as np
 
-from contextlib import suppress
+# from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 from visa import VisaIOError
@@ -37,6 +37,32 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
+
+
+def ScanningN(start, end, N):
+    # N += 1
+    stepsize = abs(end - start) / (N - 1)
+    stepsize = abs(stepsize) if start < end else -abs(stepsize)
+    seq = []
+    for __ in range(int(N)):
+        seq.append(start)
+        start += stepsize
+    return seq, stepsize
+
+
+def ScanningSize(start, end, parameter):
+    stepsize = abs(parameter) if start < end else -abs(parameter)
+    seq = []
+    if start < end:
+        while start < end:
+            seq.append(start)
+            start += stepsize
+    else:
+        while start > end:
+            seq.append(start)
+            start += stepsize
+    N = len(seq)
+    return seq, N
 
 
 def convert_time_date(ts):
@@ -167,8 +193,7 @@ def noKeyError(func):
         # if inspect.isclass(type(args[0])):
         try:
             return func(*args, **kwargs)
-
-        except KeyError as e_key:
+        except KeyError:
             pass
     return wrapper_noKeyError
 
