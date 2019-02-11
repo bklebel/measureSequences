@@ -31,7 +31,7 @@ class Sequence_CryostatGUI(Sequence_runner, AbstractEventhandlingThread):
     def setTempVTIOffset(self, offset):
         self.temp_VTI_offset = offset
 
-    def scan_T_programSweep(self, temperatures, SweepRate):
+    def scan_T_programSweep(self, temperatures, SweepRate, SpacingCode):
         """
             program sweep for VTI
             program sweep for LakeShore
@@ -68,3 +68,12 @@ class Sequence_CryostatGUI(Sequence_runner, AbstractEventhandlingThread):
             direction = -1: temperature should be falling
         """
         raise NotImplementedError
+
+    def setTemperature(self, temperature):
+        """set Temperature"""
+        temp_setpoint_sample = temperature
+        temp_setpoint_VTI = temp_setpoint_sample - self.temp_VTI_offset
+        temp_setpoint_VTI = 4.3 if temp_setpoint_VTI < 4.3 else temp_setpoint_VTI
+
+        self.setTemperatures_hard(VTI=temp_setpoint_VTI,
+                                  Sample=temp_setpoint_sample)

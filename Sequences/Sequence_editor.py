@@ -473,12 +473,12 @@ class Sequence_builder(Window_ui):
         """read the whole sequence from a file"""
         with open(file, 'r') as myfile:
             data = myfile.readlines()  # .replace('\n', '')
-        # print(data)
+
+        # preparing variables
         self.jumping_count = [0, 0]
         self.nesting_level = 0
+        # parse sequence
         commands, textsequence = self.parse_nesting(data, -1)
-        # print('parsed commands:', commands)
-        # for x in commands: print(x)
         return commands, textsequence
 
     def parse_nesting(self, lines_file, lines_index):
@@ -488,17 +488,12 @@ class Sequence_builder(Window_ui):
             textsequence = []
         else:
             textsequence = None
-        # print(lines_file[lines_index+1:])
         for ct, line_further in enumerate(lines_file[lines_index + 1:]):
-            # print(lines_index, ct, leave)
             if self.jumping_count[self.nesting_level + 1] > 0:
                 self.jumping_count[self.nesting_level + 1] -= 1
-                # print('just reduced the jumpting count', self.jumping_count)
-                # print(self.jumping_count, self.nesting_level, self.jumping_count[self.nesting_level + 1] )
                 continue
             for count, jump in enumerate(self.jumping_count[:-1]):
                 self.jumping_count[count] += 1
-            # print(self.jumping_count)
             try:
 
                 dic_loop = self.parse_line(
@@ -515,11 +510,9 @@ class Sequence_builder(Window_ui):
                     textsequence.append(dic_loop)
                     self.add_text(textsequence, dic_loop)
         del self.jumping_count[-1]
-        # print("done with this nesting level: ", self.nesting_level)
         return commands, textsequence
 
     def add_text(self, text_list, dic):
-        # pass
         if 'commands' in dic:
             for c in dic['commands']:
 
@@ -608,7 +601,7 @@ class Sequence_builder(Window_ui):
         """parse a line in which a scan was defined"""
         # parse this scan instructions
         line_found = self.p.findall(line)[0]
-        # print('parsing a scan: ', line_found)
+
         dic = dict(typ=None)
         if line_found[2][0] == 'H':
             # Field
@@ -672,20 +665,11 @@ class Sequence_builder(Window_ui):
     @staticmethod
     def displaytext_scan_T(data):
         """generate the displaytext for the temperature scan"""
-        # if data['ApproachMode'] == 0:
-        #     mode = 'Fast Settle (single Set Temperature)'
-        # if data['ApproachMode'] == 1:
-        #     mode = "No o'shoot (slow - not yet implemented!)"
-        #     raise NotImplementedError('There is no "No o\'shoot" mode yet!')
-        # if data['ApproachMode'] == 2:
-        #     mode = 'Sweep'
-
         return 'Scan Temperature from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}'.format(**data)
 
     @staticmethod
     def displaytext_scan_H(data):
         """generate the displaytext for the field scan"""
-
         return 'Scan Field from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}, {EndMode}'.format(**data)
 
     @staticmethod
@@ -839,13 +823,13 @@ class Sequence_builder(Window_ui):
             dic['SpacingCode'] = 'logH'
 
         if int(numbers[5]) == 0:
-            dic['ApproachMode'] = 'linear'
+            dic['ApproachMode'] = 'Linear'
         if int(numbers[5]) == 1:
             dic['ApproachMode'] = 'No O\'Shoot'
         if int(numbers[5]) == 2:
-            dic['ApproachMode'] = 'oscillate'
+            dic['ApproachMode'] = 'Oscillate'
         if int(numbers[5]) == 3:
-            dic['ApproachMode'] = 'sweep'
+            dic['ApproachMode'] = 'Sweep'
 
         if int(numbers[6]) == 0:
             dic['EndMode'] = 'persistent'

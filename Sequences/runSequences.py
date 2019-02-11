@@ -33,6 +33,31 @@ class BreakCondition(Exception):
     pass
 
 
+def mapping_tofunc(func, start, end, Nsteps):
+    """Map a function behaviour to an arbitrary Sequence
+
+    Nsteps must be >= 2!
+    applied logic:
+        f(t) = c + ((d-c)/(b-a)) * (t-a)
+    going between intervals:
+        [a, b] --> [c, d]
+    nbase == new base sequence
+    nbase[0] + ((nbase[-1]-nbase[0])/(cbase[-1]-cbase[0]))*(cbase - cbase[0])
+
+    returns numpy array with the corresponding functional behaviour
+    """
+    if Nsteps == 1:
+        raise AssertionError('mapping_tofunc: Nsteps must be >= 2!')
+    # make base 'grid'
+    base = np.linspace(1, 100, Nsteps)
+    # make calculated base, which represents the respective function
+    cbase = func(base)
+    # apply the correct mapping to the intended interval
+    mapped = start + ((end - start) /
+                      (cbase[-1] - cbase[0])) * (cbase - cbase[0])
+    return mapped
+
+
 class Sequence_runner(object):
     """docstring for Sequence_Thread"""
 
@@ -134,20 +159,37 @@ class Sequence_runner(object):
         if operation == 'high vacuum':
             self.execute_chamber_high_vacuum()
 
-    def execute_waiting(self, Temp, Field, Position, Chamber, Delay, **kwargs):
+    def execute_waiting(self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, threshold=0.1, **kwargs):
+        """wait for specified variables, including a Delay
+
+        target variables are 'self._setpoint_VARIABLE'
+            VARIABLE: temp, field, position, chamber
+        getfunc functions are 'self.getVARIABLE'
+            VARIABLE: Temperature, Field, Position, Chamber
+
+        returns: None
+        """
         if Temp:
-            self.wait_for(target=self.setpoint_temp,
-                          getfunc=self.getTemperature)
+            self.wait_for(target=self._setpoint_temp,
+                          getfunc=self.getTemperature,
+                          threshold=threshold)
         if Field:
-            self.wait_for(target=self.setpoint_field,
-                          getfunc=self.getField)
+            self.wait_for(target=self._setpoint_field,
+                          getfunc=self.getField,
+                          threshold=threshold)
         if Position:
-            self.wait_for(target=self.setpoint_position,
-                          getfunc=self.getPosition)
+            self.wait_for(target=self._setpoint_position,
+                          getfunc=self.getPosition,
+                          threshold=threshold)
         if Chamber:
-            self.wait_for(target=self.setpoint_chamber,
+            self.wait_for(target=self._setpoint_chamber,
                           getfunc=self.getChamber, threshold=0)
-        time.sleep(Delay)
+
+        delay_start = 0
+        delay_step = 0.01
+        while delay_start < Delay & self._isRunning:
+            time.sleep(delay_step)
+            delay_start += delay_step
 
     def execute_beep(self, length, frequency):
         """beep for a certain time at a certain frequency
@@ -170,54 +212,113 @@ class Sequence_runner(object):
             self.message_to_user(
                 'no easily controllable beep function on mac available')
 
-    @staticmethod
-    def message_to_user(message):
-        """deliver a message to a user in some way
+    def scan_H_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
+        '''execute a Field scan
 
-        default is printing to the command line
-        """
-        print(message)
+        '''
+        if SpacingCode == 'uniform':
+            fields = mapping_tofunc(lambda x: x, start, end, Nsteps)
+            raise NotImplementedError
+        elif SpacingCode == 'H*H':
+            fields = mapping_tofunc(lambda x: np.square(x), start, end, Nsteps)
+            raise NotImplementedError
+        elif SpacingCode == 'logH':
+            fields = mapping_tofunc(lambda x: np.log(x), start, end, Nsteps)
+            raise NotImplementedError
+        elif SpacingCode == '1/H':
+            fields = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
+            raise NotImplementedError
+        elif SpacingCode == 'H^1/2':
+            fields = mapping_tofunc(lambda x: x**0.5, start, end, Nsteps)
+            raise NotImplementedError
+
+        if ApproachMode == 'Linear'
+            raise NotImplementedError
+            if EndMode == 'persistent'
+                raise NotImplementedError
+            if EndMode == 'driven'
+                raise NotImplementedError
+        if ApproachMode == 'No O\'Shoot'
+            raise NotImplementedError
+            if EndMode == 'persistent'
+                raise NotImplementedError
+            if EndMode == 'driven'
+                raise NotImplementedError
+        if ApproachMode == 'Oscillate'
+            raise NotImplementedError
+            if EndMode == 'persistent'
+                raise NotImplementedError
+            if EndMode == 'driven'
+                raise NotImplementedError
+        if ApproachMode == 'Sweep'
+            raise NotImplementedError
+
+            if EndMode == 'persistent'
+                raise NotImplementedError
+            if EndMode == 'driven'
+                raise NotImplementedError
 
     def scan_T_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
 
-        # spacingcode information not being used!
+        # building the individual temperatures to scan through
         if SpacingCode == 'uniform':
-            temperatures = np.linspace(start, end, Nsteps)
+            temperatures = mapping_tofunc(lambda x: x, start, end, Nsteps)
+
         elif SpacingCode == '1/T':
-            # needs to be implemented!
-            raise NotImplementedError
+            temperatures = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
+
         elif SpacingCode == 'logT':
-            # needs to be implemented!
-            raise NotImplementedError
+            temperatures = mapping_tofunc(
+                lambda x: np.log(x), start, end, Nsteps)
 
+        # scanning through the temperatures:
+
+        # approaching very slowly:
         if ApproachMode == "No O'Shoot":
-            raise NotImplementedError
+            for ct, temp in enumerate(temperatures):
+                first = temperatures[0] if ct == 0 else temperatures[ct - 1]
+                scantemps = mapping_tofunc(lambda x: np.log(
+                    x), start=first, end=temp, Nsteps=10)
+                for t in scantemps:
+                    self.setTemperature(t)
+                    self._setpoint_temp = t
+                    self.checkStable_Temp(Temp=t,
+                                          direction=np.sign(temp - first),
+                                          ApproachMode=ApproachMode)
+                    self.execute_waiting(Temp=True, Delay=10)
+                self.checkStable_Temp(temp, direction=0)
 
+                for entry in commands:
+                    self.execute_sequence_entry(entry)
+
+        # approaching rather fast:
         if ApproachMode == 'Fast':
-            for temp_setpoint_sample in temperatures:
-                self.temp_setpoint = temp_setpoint_sample
-                temp_setpoint_VTI = temp_setpoint_sample - self.temp_VTI_offset
-                temp_setpoint_VTI = 4.3 if temp_setpoint_VTI < 4.3 else temp_setpoint_VTI
+            for ct, temp in enumerate(temperatures):
+                first = temperatures[0] if ct == 0 else temperatures[ct - 1]
 
-                self.setTemperatures_hard(VTI=temp_setpoint_VTI,
-                                          Sample=temp_setpoint_sample)
-
-                self.check_Temp_in_Scan(temp_setpoint_sample)
+                self.setTemperature(temp)
+                self.checkStable_Temp(Temp=temp,
+                                      direction=np.sign(temp - first),
+                                      ApproachMode=ApproachMode)
 
                 for entry in commands:
                     self.execute_sequence_entry(entry)
 
+        # sweeping through the values:
         if ApproachMode == 'Sweep':
-            # program VTI sweep, in accordance to the VTI Offset
-            self.scan_T_programSweep(temperatures, SweepRate)
-            # set temp and RampRate for Lakeshore
-            # if T_sweepentry is arrived: do stuff
-            for temp in temperatures:
-                # do checking and so on
+            self.scan_T_programSweep(temperatures, SweepRate, SpacingCode)
+
+            for ct, temp in enumerate(temperatures):
+
+                first = temperatures[0] if ct == 0 else temperatures[ct - 1]
+                self.checkStable_Temp(Temp=temp,
+                                      direction=np.sign(temp - first),
+                                      ApproachMode=ApproachMode)
+
                 for entry in commands:
                     self.execute_sequence_entry(entry)
 
-    def wait_for(self, getfunc, target, threshold=0.1):
+    def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True):
         """repeatedly check whether the temperature was reached,
             given the respective threshold, return once it has
             produce a possibility to abort the sequence, through
@@ -225,7 +326,7 @@ class Sequence_runner(object):
         """
         value_now = getfunc()
 
-        while abs(value_now - target) > threshold:
+        while abs(value_now - target) > threshold & additional_condition:
             # check for break condition
             if not self._isRunning:
                 raise BreakCondition
@@ -238,12 +339,20 @@ class Sequence_runner(object):
         """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
 
-    def scan_T_programSweep(self, temperatures, SweepRate):
+    @staticmethod
+    def message_to_user(message):
+        """deliver a message to a user in some way
+
+        default is printing to the command line
+        may be overriden!
+        """
+        print(message)
+
+    def scan_T_programSweep(self, temperatures, SweepRate, SpacingCode='uniform'):
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
-            the respective Sweep
-            temperatures
+            the respective Sweep temperatures
         """
         raise NotImplementedError
 
@@ -292,15 +401,22 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def checkStable_Temp(self, Temp, direction=0):
-        """
-            wait for the temperature to stabilize
-            must block until the temperature has arrived at the specified point!
-            the optional parameter can be whether the corresponding value should
-            currently be rising or falling
-            direction = 0: default, no information
-            direction =  1: temperature should be rising
-            direction = -1: temperature should be falling
+    def checkStable_Temp(self, Temp, direction=0, ApproachMode=):
+        """wait for the temperature to stabilize
+
+        param: Temp:
+            the temperature which needs to be arrived to continue
+            function must block until the temperature has arrived at this temp!
+
+        param: direction:
+            indicates whether the 'Temp' should currently be
+                rising or falling
+                direction =  0: default, no information
+                direction =  1: temperature should be rising
+                direction = -1: temperature should be falling
+
+        param: Approachmode:
+            specifies the mode of approach in the scan this function is called
         """
         raise NotImplementedError
 
