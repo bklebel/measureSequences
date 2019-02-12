@@ -137,7 +137,7 @@ class Sequence_runner(object):
         else:
             raise BreakCondition
 
-    def execute_chamber(self, operation):
+    def execute_chamber(self, operation, **kwargs):
         """execute the specified chamber operation"""
         if operation == 'seal immediate':
             self.execute_chamber_seal()
@@ -191,7 +191,7 @@ class Sequence_runner(object):
             time.sleep(delay_step)
             delay_start += delay_step
 
-    def execute_beep(self, length, frequency):
+    def execute_beep(self, length, frequency, **kwargs):
         """beep for a certain time at a certain frequency
 
         controlelled beep available on windows and linux, not on mac
@@ -200,9 +200,9 @@ class Sequence_runner(object):
         frequency in Hertz
         """
         if platform.system() == 'Windows':
-            winsound.Beep(frequency, length * 1e3)
+            winsound.Beep(int(frequency), int(length * 1e3))
         if platform.system() == 'Linux':
-            answer = os.system('beep -f 165.4064 -l 1000')
+            answer = os.system(f'beep -f {frequency} -l {length}')
             if answer:
                 print('\a')  # ring the command lin bell
                 self.message_to_user(
@@ -218,44 +218,43 @@ class Sequence_runner(object):
         '''
         if SpacingCode == 'uniform':
             fields = mapping_tofunc(lambda x: x, start, end, Nsteps)
-            raise NotImplementedError
+
         elif SpacingCode == 'H*H':
             fields = mapping_tofunc(lambda x: np.square(x), start, end, Nsteps)
-            raise NotImplementedError
+
         elif SpacingCode == 'logH':
             fields = mapping_tofunc(lambda x: np.log(x), start, end, Nsteps)
-            raise NotImplementedError
+
         elif SpacingCode == '1/H':
             fields = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
-            raise NotImplementedError
+
         elif SpacingCode == 'H^1/2':
             fields = mapping_tofunc(lambda x: x**0.5, start, end, Nsteps)
+
+        if ApproachMode == 'Linear':
+            raise NotImplementedError
+            if EndMode == 'persistent':
+                raise NotImplementedError
+            if EndMode == 'driven':
+                raise NotImplementedError
+        if ApproachMode == 'No O\'Shoot':
+            raise NotImplementedError
+            if EndMode == 'persistent':
+                raise NotImplementedError
+            if EndMode == 'driven':
+                raise NotImplementedError
+        if ApproachMode == 'Oscillate':
+            raise NotImplementedError
+            if EndMode == 'persistent':
+                raise NotImplementedError
+            if EndMode == 'driven':
+                raise NotImplementedError
+        if ApproachMode == 'Sweep':
             raise NotImplementedError
 
-        if ApproachMode == 'Linear'
-            raise NotImplementedError
-            if EndMode == 'persistent'
+            if EndMode == 'persistent':
                 raise NotImplementedError
-            if EndMode == 'driven'
-                raise NotImplementedError
-        if ApproachMode == 'No O\'Shoot'
-            raise NotImplementedError
-            if EndMode == 'persistent'
-                raise NotImplementedError
-            if EndMode == 'driven'
-                raise NotImplementedError
-        if ApproachMode == 'Oscillate'
-            raise NotImplementedError
-            if EndMode == 'persistent'
-                raise NotImplementedError
-            if EndMode == 'driven'
-                raise NotImplementedError
-        if ApproachMode == 'Sweep'
-            raise NotImplementedError
-
-            if EndMode == 'persistent'
-                raise NotImplementedError
-            if EndMode == 'driven'
+            if EndMode == 'driven':
                 raise NotImplementedError
 
     def scan_T_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
@@ -285,6 +284,7 @@ class Sequence_runner(object):
                     self.checkStable_Temp(Temp=t,
                                           direction=np.sign(temp - first),
                                           ApproachMode=ApproachMode)
+
                     self.execute_waiting(Temp=True, Delay=10)
                 self.checkStable_Temp(temp, direction=0)
 
@@ -326,7 +326,7 @@ class Sequence_runner(object):
         """
         value_now = getfunc()
 
-        while abs(value_now - target) > threshold & additional_condition:
+        while (abs(value_now - target) > threshold) & additional_condition:
             # check for break condition
             if not self._isRunning:
                 raise BreakCondition
@@ -363,7 +363,9 @@ class Sequence_runner(object):
             needs to be implemented.
             TODO: override method
         """
-        raise NotImplementedError
+        self._setpoint_temp = temperature
+        super().setTemperature(temperature=temperature)
+        # raise NotImplementedError
 
     def getTemperature(self):
         """Read the temperature
@@ -401,7 +403,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def checkStable_Temp(self, Temp, direction=0, ApproachMode=):
+    def checkStable_Temp(self, Temp, direction=0, ApproachMode='Sweep'):
         """wait for the temperature to stabilize
 
         param: Temp:

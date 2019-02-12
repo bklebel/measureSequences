@@ -621,7 +621,7 @@ class Sequence_builder(Window_ui):
 
         self.nesting_level += 1
 
-        commands, nothing = self.parse_nesting(lines_file, lines_index)
+        commands, _ = self.parse_nesting(lines_file, lines_index)
 
         dic.update(dict(commands=commands))
         return dic
@@ -757,7 +757,7 @@ class Sequence_builder(Window_ui):
                    Chamber=bool(int(nums[4])),
                    Delay=nums[0])
         dic['DisplayText'] = self.textnesting * \
-            self.nesting_level + displaytext_waiting(dic)
+            self.nesting_level + self.displaytext_waiting(dic)
         return dic
         # dic.update(local_dic.update(dict(DisplayText=self.parse_waiting(local_dic))))
 
