@@ -309,7 +309,7 @@ class Sequence_parser(object):
             output.write(json.dumps(self.data))
 
     def change_file_location(self, fname):
-        self.sequence_file = os.path.splitext(fname) + '.seq'
+        self.sequence_file = os.path.splitext(fname)[0] + '.seq'
         self.sequence_file_p = os.path.splitext(self.sequence_file)[0] + '.pkl'
         self.sequence_file_json = os.path.splitext(
             self.sequence_file)[0] + '.json'
