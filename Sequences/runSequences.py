@@ -82,58 +82,60 @@ class Sequence_runner(object):
                     self.execute_sequence_entry(entry)
             except BreakCondition:
                 return 'Aborted!'
+            except NotImplementedError as e:
+                self.message_to_user(f'An error occured: {e}')
+
+    def check_running(self):
+        if not self._isRunning:
+            raise BreakCondition
 
     def execute_sequence_entry(self, entry):
-        if self._isRunning:
+        self.check_running()
 
-            if entry['typ'] == 'Shutdown':
-                self.Shutdown()
-            if entry['typ'] == 'Wait':
-                self.execute_waiting(**entry)
-            if entry['typ'] == 'chamber_operation':
-                self.execute_chamber(**entry)
-            if entry['typ'] == 'beep':
-                self.execute_beep(**entry)
-            if entry['typ'] == 'scan_T':
-                self.scan_T_execute(**entry)
+        if entry['typ'] == 'Shutdown':
+            self.Shutdown()
+        if entry['typ'] == 'Wait':
+            self.execute_waiting(**entry)
+        if entry['typ'] == 'chamber_operation':
+            self.execute_chamber(**entry)
+        if entry['typ'] == 'beep':
+            self.execute_beep(**entry)
+        if entry['typ'] == 'scan_T':
+            self.scan_T_execute(**entry)
+        if entry['typ'] == 'scan_H':
+            self.scan_H_execute(**entry)
 
-            if entry['typ'] == 'scan_H':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'scan_time':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'scan_position':
-                # has yet to be implemented!
-                pass
+        if entry['typ'] == 'scan_time':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'scan_position':
+            # has yet to be implemented!
+            pass
 
-            if entry['typ'] == 'set_T':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'set_Field':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'chain sequence':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'res_change_datafile':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'res_datafilecomment':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'res_measure':
-                # has yet to be implemented!
-                pass
-            if entry['typ'] == 'res_scan_excitation':
-                # has yet to be implemented!
-                pass
+        if entry['typ'] == 'set_T':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'set_Field':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'chain sequence':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'res_change_datafile':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'res_datafilecomment':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'res_measure':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'res_scan_excitation':
+            # has yet to be implemented!
+            pass
 
-            if entry['typ'] == 'remark':
-                # true pass statement
-                pass
-        else:
-            raise BreakCondition
+        if entry['typ'] == 'remark':
+            self.execute_remark(entry['DisplayText'])
 
     def execute_chamber(self, operation, **kwargs):
         """execute the specified chamber operation"""
@@ -210,7 +212,7 @@ class Sequence_runner(object):
             self.message_to_user(
                 'no easily controllable beep function on mac available')
 
-    def scan_H_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
+    def scan_H_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, EndMode, **kwargs):
         '''execute a Field scan
 
         '''
@@ -230,32 +232,49 @@ class Sequence_runner(object):
             fields = mapping_tofunc(lambda x: x**0.5, start, end, Nsteps)
 
         if ApproachMode == 'Linear':
-            raise NotImplementedError
-            if EndMode == 'persistent':
-                raise NotImplementedError
-            if EndMode == 'driven':
-                raise NotImplementedError
-        if ApproachMode == 'No O\'Shoot':
-            raise NotImplementedError
-            if EndMode == 'persistent':
-                raise NotImplementedError
-            if EndMode == 'driven':
-                raise NotImplementedError
-        if ApproachMode == 'Oscillate':
-            raise NotImplementedError
-            if EndMode == 'persistent':
-                raise NotImplementedError
-            if EndMode == 'driven':
-                raise NotImplementedError
-        if ApproachMode == 'Sweep':
-            raise NotImplementedError
+            for field in fields:
+                self._setpoint_field = field
+                self.setField(field=field, EndMode=EndMode)
+                for entry in commands:
+                    self.execute_sequence_entry(entry)
 
-            if EndMode == 'persistent':
-                raise NotImplementedError
-            if EndMode == 'driven':
-                raise NotImplementedError
+        if ApproachMode == 'No O\'Shoot':
+            for ct, field in enumerate(fields):
+                first = fields[0] if ct == 0 else fields[ct - 1]
+                approachFields = mapping_tofunc(lambda x: np.log(
+                    x), start=first, end=field, Nsteps=10)
+                for t in approachFields:
+                    self.setField(field=field, EndMode='driven')
+                    self._setpoint_field = field
+                    # self.checkStable_Temp(Temp=t,
+                    #                       direction=np.sign(temp - first),
+                    #                       ApproachMode='Fast')
+
+                    self.execute_waiting(Field=True, Delay=10)
+                # self.checkStable_Temp(
+                    # Temp=temp, direction=0, ApproachMode=ApproachMode)
+                # self.setFieldEndMode(EndMode=EndMode)
+                for entry in commands:
+                    self.execute_sequence_entry(entry)
+
+        if ApproachMode == 'Oscillate':
+            raise NotImplementedError('oscillating field ApproachMode')
+
+        if ApproachMode == 'Sweep':
+            self.scan_H_programSweep(
+                start=start, end=end, Nsteps=Nsteps, SweepRate=SweepRate, SpacingCode=SpacingCode)
+            for field in fields:
+                first = fields[0] if ct == 0 else fields[ct - 1]
+                self.checkField(Field=field,
+                                direction=np.sign(field - first),
+                                ApproachMode='Sweep')
+                for entry in commands:
+                    self.execute_sequence_entry(entry)
+
+        self.setFieldEndMode(EndMode=EndMode)
 
     def scan_T_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
+        """perform a temperature scan with given parameters"""
 
         # building the individual temperatures to scan through
         if SpacingCode == 'uniform':
@@ -271,20 +290,21 @@ class Sequence_runner(object):
         # scanning through the temperatures:
 
         # approaching very slowly:
-        if ApproachMode == "No O'Shoot":
+        if ApproachMode == "No O\'Shoot":
             for ct, temp in enumerate(temperatures):
                 first = temperatures[0] if ct == 0 else temperatures[ct - 1]
-                scantemps = mapping_tofunc(lambda x: np.log(
+                approachTemps = mapping_tofunc(lambda x: np.log(
                     x), start=first, end=temp, Nsteps=10)
-                for t in scantemps:
+                for t in approachTemps:
                     self.setTemperature(t)
                     self._setpoint_temp = t
-                    self.checkStable_Temp(Temp=t,
+                    self.checkStable_Temp(temp=t,
                                           direction=np.sign(temp - first),
-                                          ApproachMode=ApproachMode)
+                                          ApproachMode='Fast')
 
                     self.execute_waiting(Temp=True, Delay=10)
-                self.checkStable_Temp(temp, direction=0)
+                self.checkStable_Temp(
+                    Temp=temp, direction=0, ApproachMode=ApproachMode)
 
                 for entry in commands:
                     self.execute_sequence_entry(entry)
@@ -295,7 +315,7 @@ class Sequence_runner(object):
                 first = temperatures[0] if ct == 0 else temperatures[ct - 1]
 
                 self.setTemperature(temp)
-                self.checkStable_Temp(Temp=temp,
+                self.checkStable_Temp(temp=temp,
                                       direction=np.sign(temp - first),
                                       ApproachMode=ApproachMode)
 
@@ -304,14 +324,15 @@ class Sequence_runner(object):
 
         # sweeping through the values:
         if ApproachMode == 'Sweep':
-            self.scan_T_programSweep(temperatures, SweepRate, SpacingCode)
+            self.scan_T_programSweep(start=start, end=end, Nsteps=Nsteps,
+                                     temperatures=temperatures, SweepRate=SweepRate, SpacingCode=SpacingCode)
 
             for ct, temp in enumerate(temperatures):
 
                 first = temperatures[0] if ct == 0 else temperatures[ct - 1]
-                self.checkStable_Temp(Temp=temp,
+                self.checkStable_Temp(temp=temp,
                                       direction=np.sign(temp - first),
-                                      ApproachMode=ApproachMode)
+                                      ApproachMode='Sweep')
 
                 for entry in commands:
                     self.execute_sequence_entry(entry)
@@ -326,8 +347,7 @@ class Sequence_runner(object):
 
         while (abs(value_now - target) > threshold) & additional_condition:
             # check for break condition
-            if not self._isRunning:
-                raise BreakCondition
+            self.check_running()
             # check for value
             value_now = getfunc()
             # sleep
@@ -337,16 +357,23 @@ class Sequence_runner(object):
         """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
 
+    def execute_remark(self, remark: str) -> None:
+        """use the given remark
+
+        shoud be overriden in case the remark means anything"""
+        self.message_to_user(f'there is a remark: {remark}')
+
     @staticmethod
-    def message_to_user(message):
+    def message_to_user(message: str) -> None:
         """deliver a message to a user in some way
 
         default is printing to the command line
         may be overriden!
         """
+        super().message_to_user(message)
         print(message)
 
-    def scan_T_programSweep(self, temperatures, SweepRate, SpacingCode='uniform'):
+    def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode='uniform'):
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
@@ -354,16 +381,42 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def setTemperature(self, temperature):
+    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, SpacingCode='uniform'):
         """
-            Method to be overridden by a child class
-            here, all logic which is needed to go to a certain temperature
+            Method to be overriden by a child class
+            here, the devices should be programmed to start
+            the respective Sweep for field values
+        """
+        raise NotImplementedError
+
+    def setTemperature(self, temperature: float) -> None:
+        """
+            Method to be overridden/injected by a child class
+            here, all logic which is needed to go to a
+            certain temperature directly
             needs to be implemented.
             TODO: override method
         """
         self._setpoint_temp = temperature
         super().setTemperature(temperature=temperature)
         # raise NotImplementedError
+
+    def setField(self, field: float, EndMode: str) -> None:
+        """
+            Method to be overridden/injected by a child class
+            here, all logic which is needed to go to a certain field directly
+            needs to be implemented.
+            TODO: override method
+        """
+        self._setpoint_field = field
+        super().setField(field=field, EndMode=EndMode)
+        # raise NotImplementedError
+
+    def setFieldEndMode(self, EndMode: str) -> bool:
+        """Method to be overridden/injected by a child class
+        return bool stating success or failure (optional)
+        """
+        super().setFieldEndMode(EndMode)
 
     def getTemperature(self):
         """Read the temperature
@@ -401,7 +454,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def checkStable_Temp(self, Temp, direction=0, ApproachMode='Sweep'):
+    def checkStable_Temp(self, temp, direction=0, ApproachMode='Sweep'):
         """wait for the temperature to stabilize
 
         param: Temp:
@@ -415,10 +468,13 @@ class Sequence_runner(object):
                 direction =  1: temperature should be rising
                 direction = -1: temperature should be falling
 
-        param: Approachmode:
+        param: ApproachMode:
             specifies the mode of approach in the scan this function is called
         """
         raise NotImplementedError
+
+    def checkField(self, Field: float, direction: int = 0, ApproachMode: str = 'Sweep'):
+        pass
 
     def Shutdown(self):
         """Shut down instruments to a standby-configuration"""
