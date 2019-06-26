@@ -10,6 +10,7 @@ Author: bklebel (Benjamin Klebel)
 # import pickle
 # import re
 import time
+import threading
 # from copy import deepcopy
 import numpy as np
 # from numpy.polynomial.polynomial import polyfit
@@ -74,14 +75,20 @@ class Sequence_runner(object):
         self.sensor_control = None  # needs to be set!
         self.sensor_sample = None   # needs to be set!
 
+        self.scan_time_force = False
+
     def running(self):
         # self.temp_setpoint = 0
         with self.lock:
             try:
-                for entry in self.sequence:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(self.sequence)
             except BreakCondition:
                 return 'Aborted!'
+
+    def executing_commands(self, commands):
+        for entry in commands:
+            try:
+                self.execute_sequence_entry(entry)
             except NotImplementedError as e:
                 self.message_to_user(f'An error occured: {e}')
 
@@ -101,13 +108,12 @@ class Sequence_runner(object):
         if entry['typ'] == 'beep':
             self.execute_beep(**entry)
         if entry['typ'] == 'scan_T':
-            self.scan_T_execute(**entry)
+            self.execute_scan_T(**entry)
         if entry['typ'] == 'scan_H':
-            self.scan_H_execute(**entry)
-
+            self.execute_scan_H(**entry)
         if entry['typ'] == 'scan_time':
-            # has yet to be implemented!
-            pass
+            self.execute_scan_time(**entry)
+
         if entry['typ'] == 'scan_position':
             # has yet to be implemented!
             pass
@@ -136,6 +142,63 @@ class Sequence_runner(object):
 
         if entry['typ'] == 'remark':
             self.execute_remark(entry['DisplayText'])
+
+    def execute_set_Temperature(self, Temp, SweepRate):
+        pass
+
+    def execute_scan_time(self, time: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs) -> None:
+        """execute a Time scan
+        The intervals t between starting to invoke all commands in the list
+        are:
+        if self.scan_time_force is False:
+            t = max(set interval time, duration of all actions in command list),
+            where 'set interval time' is the time given
+                by the scan_time functionality
+
+            and 'duration of all actions in command list' refers to
+                the time it takes to conduct everything which is defined
+                in the list of commands given
+        else:
+            exactly the set interval times
+            However, in this case, all commands are executed in a
+                different thread, to ensure all are correctly started
+                TODO: test whether this actually works
+        """
+
+        if SpacingCode == 'uniform':
+            times = mapping_tofunc(lambda x: x, 0, time, Nsteps)
+
+        elif SpacingCode == 'ln(t)':
+            times = mapping_tofunc(lambda x: np.ln(x), 0, time, Nsteps)
+
+        if self.scan_time_force is False:
+            for time in times[1:]:
+                # start timer thread
+                timer = threading.Timer(time, lambda: 0)
+                timer.start()
+
+                # execute command
+                self.executing_commands(commands)
+
+                # join timer thread
+                timer.join()
+        else:
+            # Experimental!
+
+            timerlist = []
+            for time in times:
+                timerlist.append(threading.Timer(time, self.executing_commands, commands=commands))
+                timerlist[-1].start()
+
+            while any([x.isAlive() for x in timerlist]):
+                time.sleep(0.5)
+                try:
+                    self.check_running()
+                except BreakCondition:
+                    for x in timerlist:
+                        x.cancel()
+                        x.join()
+                    raise BreakCondition
 
     def execute_chamber(self, operation, **kwargs):
         """execute the specified chamber operation"""
@@ -212,7 +275,7 @@ class Sequence_runner(object):
             self.message_to_user(
                 'no easily controllable beep function on mac available')
 
-    def scan_H_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, EndMode, **kwargs):
+    def execute_scan_H(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, EndMode, **kwargs):
         '''execute a Field scan
 
         '''
@@ -235,8 +298,7 @@ class Sequence_runner(object):
             for field in fields:
                 self._setpoint_field = field
                 self.setField(field=field, EndMode=EndMode)
-                for entry in commands:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(commands)
 
         if ApproachMode == 'No O\'Shoot':
             for ct, field in enumerate(fields):
@@ -254,8 +316,7 @@ class Sequence_runner(object):
                 # self.checkStable_Temp(
                     # Temp=temp, direction=0, ApproachMode=ApproachMode)
                 # self.setFieldEndMode(EndMode=EndMode)
-                for entry in commands:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(commands)
 
         if ApproachMode == 'Oscillate':
             raise NotImplementedError('oscillating field ApproachMode')
@@ -268,12 +329,11 @@ class Sequence_runner(object):
                 self.checkField(Field=field,
                                 direction=np.sign(field - first),
                                 ApproachMode='Sweep')
-                for entry in commands:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(commands)
 
         self.setFieldEndMode(EndMode=EndMode)
 
-    def scan_T_execute(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
+    def execute_scan_T(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
         """perform a temperature scan with given parameters"""
 
         # building the individual temperatures to scan through
@@ -306,8 +366,7 @@ class Sequence_runner(object):
                 self.checkStable_Temp(
                     Temp=temp, direction=0, ApproachMode=ApproachMode)
 
-                for entry in commands:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(commands)
 
         # approaching rather fast:
         if ApproachMode == 'Fast':
@@ -319,8 +378,7 @@ class Sequence_runner(object):
                                       direction=np.sign(temp - first),
                                       ApproachMode=ApproachMode)
 
-                for entry in commands:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(commands)
 
         # sweeping through the values:
         if ApproachMode == 'Sweep':
@@ -334,8 +392,7 @@ class Sequence_runner(object):
                                       direction=np.sign(temp - first),
                                       ApproachMode='Sweep')
 
-                for entry in commands:
-                    self.execute_sequence_entry(entry)
+                self.executing_commands(commands)
 
     def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True):
         """repeatedly check whether the temperature was reached,
@@ -474,6 +531,7 @@ class Sequence_runner(object):
         raise NotImplementedError
 
     def checkField(self, Field: float, direction: int = 0, ApproachMode: str = 'Sweep'):
+        """check whether the Field has passed a certain value"""
         pass
 
     def Shutdown(self):
