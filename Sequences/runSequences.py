@@ -32,17 +32,17 @@ class BreakCondition(Exception):
     pass
 
 
-def mapping_tofunc(func, start, end, Nsteps):
+def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> type(np.array()):
     """Map a function behaviour to an arbitrary Sequence
 
     Nsteps must be >= 2!
+
     applied logic:
         f(t) = c + ((d-c)/(b-a)) * (t-a)
-    going between intervals:
+    for going between intervals:
         [a, b] --> [c, d]
     nbase == new base sequence
     nbase[0] + ((nbase[-1]-nbase[0])/(cbase[-1]-cbase[0]))*(cbase - cbase[0])
-
     returns numpy array with the corresponding functional behaviour
     """
     if Nsteps == 1:
@@ -60,7 +60,7 @@ def mapping_tofunc(func, start, end, Nsteps):
 class Sequence_runner(object):
     """docstring for Sequence_Thread"""
 
-    def __init__(self, lock, sequence, **kwargs):
+    def __init__(self, lock, sequence: list, thresholds_waiting: dict = dict(Temp = 0.1, Field = 0.1, Position = 0.1), **kwargs):
         super().__init__(**kwargs)
         self._isRunning = True
         self.sequence = sequence
@@ -69,6 +69,7 @@ class Sequence_runner(object):
 
         # self.threshold_Temp = 0.1
         # self.threshold_Field = 0.1
+        self.thresholds_waiting = thresholds_waiting
 
         # self.temp_VTI_offset = 5
 
@@ -129,8 +130,8 @@ class Sequence_runner(object):
             pass
 
         if entry['typ'] == 'set_T':
-            # has yet to be implemented!
-            pass
+            self.execute_set_Temperature(**entry)
+
         if entry['typ'] == 'set_Field':
             # has yet to be implemented!
             pass
@@ -328,6 +329,22 @@ class Sequence_runner(object):
 
                 self.executing_commands(commands)
 
+    def execute_scan_P(self, start, end, Nsteps, speedindex, ApproachMode, commands, **kwargs) -> None:
+        """perform a position scan with the given parameters"""
+
+        positions = mapping_tofunc(lambda x: x, start, end, Nsteps)
+
+        if ApproachMode == 'Pause':
+            for pos in positions:
+                self.setPosition(position=pos, speedindex=speedindex)
+                self.wait_for(target=self._setpoint_pos,
+                              getfunc=self.getPosition,
+                              threshold=self.thresholds_waiting['Position'])
+                self.executing_commands(commands)
+
+        if ApproachMode == 'Sweep':
+            pass
+
     def execute_chamber(self, operation, **kwargs):
         """execute the specified chamber operation"""
         if operation == 'seal immediate':
@@ -363,18 +380,19 @@ class Sequence_runner(object):
         if Temp:
             self.wait_for(target=self._setpoint_temp,
                           getfunc=self.getTemperature,
-                          threshold=threshold)
+                          threshold=self.thresholds_waiting['Temp'])
         if Field:
             self.wait_for(target=self._setpoint_field,
                           getfunc=self.getField,
-                          threshold=threshold)
+                          threshold=self.thresholds_waiting['Field'])
         if Position:
-            self.wait_for(target=self._setpoint_position,
+            self.wait_for(target=self._setpoint_pos,
                           getfunc=self.getPosition,
-                          threshold=threshold)
+                          threshold=self.thresholds_waiting['Position'])
         if Chamber:
             self.wait_for(target=self._setpoint_chamber,
-                          getfunc=self.getChamber, threshold=0)
+                          getfunc=self.getChamber,
+                          threshold=0)
 
         delay_start = 0
         delay_step = 0.01
@@ -403,7 +421,7 @@ class Sequence_runner(object):
             self.message_to_user(
                 'no easily controllable beep function on mac available')
 
-    def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True):
+    def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True, **kwargs):
         """repeatedly check whether the respective value was reached,
             given the respective threshold, return once it has
             produce a possibility to abort the sequence, through
@@ -419,10 +437,18 @@ class Sequence_runner(object):
             # sleep
             time.sleep(0.1)
 
-    def execute_set_Temperature(self, Temp, SweepRate=None):
+    def execute_set_Temperature(self, Temp: float, SweepRate: float = None) -> None:
+        """execute the set temperature command
+
+        in case a SweepRate is supplied, use it in a scan_T fashion
+        else just hard-set the temperature
+
+        Nsteps in the SweepRate mode is set to 2, implying
+            the current temperature to be step 1 of 2
+        """
         if SweepRate:
             self.scan_T_programSweep(start=self.getTemperature(
-            ), end=Temp, Nsteps=1, temperatures=None, SweepRate=SweepRate)
+            ), end=Temp, Nsteps=2, temperatures=None, SweepRate=SweepRate)
         else:
             self.setTemperature(temperature=Temp)
 
@@ -487,7 +513,7 @@ class Sequence_runner(object):
         super().setTemperature(temperature=temperature)
         # raise NotImplementedError
 
-    def getTemperature(self):
+    def getTemperature(self) -> float:
         """Read the temperature
 
         Method to be overriden by child class
@@ -496,7 +522,19 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def getPosition(self):
+    def setPosition(self, position: float, speedindex: float) -> None:
+        """
+            Method to be overridden/injected by a child class
+            here, all logic which is needed to go to a
+            certain position directly
+            needs to be implemented.
+            TODO: override method
+        """
+        self._setpoint_pos = position
+        super().setPosition(position=position, speedindex=speedindex)
+        # raise NotImplementedError
+
+    def getPosition(self) -> float:
         """
             Method to be overriden by child class
             implement checking the position
