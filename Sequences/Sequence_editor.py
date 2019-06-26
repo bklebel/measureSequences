@@ -732,7 +732,7 @@ class Sequence_parser(object):
 
     def parse_scan_P(self, comm):
         nums = self.read_nums(comm)
-        if len(nums) < 3:
+        if len(nums) < 4:
             raise AssertionError(
                 'not enough specifying numbers for position-scan!')
 
@@ -742,7 +742,15 @@ class Sequence_parser(object):
                    speedindex=nums[2],
                    Nsteps=nums[3])
 
-        dic['ApproachMode'] = 'Sweep' if len(nums) > 3 else 'Pause'
+        if len(nums) > 4:
+            if int(nums[4]) == 1:
+                dic['ApproachMode'] = 'Sweep'
+            else:
+                dic['ApproachMode'] = 'Pause'
+        else:
+            dic['ApproachMode'] = 'Pause'
+
+        # dic['ApproachMode'] = 'Sweep' if len(nums) > 4 else 'Pause'
         dic['DisplayText'] = self.textnesting * self.nesting_level + \
             'Scan Position from {start} to {end} in {Nsteps} steps, {speedindex}, {ApproachMode} '.format(
                 **dic)
