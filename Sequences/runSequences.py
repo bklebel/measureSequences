@@ -90,11 +90,21 @@ class Sequence_runner(object):
             try:
                 self.execute_sequence_entry(entry)
             except NotImplementedError as e:
-                self.message_to_user(f'An error occured: {e}')
+                self.message_to_user(f'An error occured: {e}. Did you maybe' +
+                                     ' try to call a function/method which' +
+                                     ' needs to be manually overriden?')
+            except AttributeError as e:
+                self.message_to_user(f'An error occured: {e}. Did you maybe' +
+                                     ' try to call a function/method which' +
+                                     ' needs to be manually injected?')
 
     def check_running(self):
         if not self._isRunning:
             raise BreakCondition
+
+    def stop(self):
+        """stop the sequence execution by setting self._isRunning to False"""
+        self._isRunning = False
 
     def execute_sequence_entry(self, entry):
         self.check_running()
@@ -143,9 +153,6 @@ class Sequence_runner(object):
         if entry['typ'] == 'remark':
             self.execute_remark(entry['DisplayText'])
 
-    def execute_set_Temperature(self, Temp, SweepRate):
-        pass
-
     def execute_scan_time(self, time: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs) -> None:
         """execute a Time scan
         The intervals t between starting to invoke all commands in the list
@@ -184,10 +191,12 @@ class Sequence_runner(object):
                 timer.join()
         else:
             # Experimental!
+            # commands and stuff needs to be threadsafe!
 
             timerlist = []
             for time in times:
-                timerlist.append(threading.Timer(time, self.executing_commands, commands=commands))
+                timerlist.append(threading.Timer(
+                    time, self.executing_commands, commands=commands))
                 timerlist[-1].start()
 
             while any([x.isAlive() for x in timerlist]):
@@ -199,81 +208,6 @@ class Sequence_runner(object):
                         x.cancel()
                         x.join()
                     raise BreakCondition
-
-    def execute_chamber(self, operation, **kwargs):
-        """execute the specified chamber operation"""
-        if operation == 'seal immediate':
-            self.execute_chamber_seal()
-
-        if operation == 'purge then seal':
-            self.execute_chamber_purge()
-            self.execute_chamber_seal()
-
-        if operation == 'vent then seal':
-            self.execute_chamber_vent()
-            self.execute_chamber_seal()
-
-        if operation == 'pump continuous':
-            self.execute_chamber_continuous('pumping')
-
-        if operation == 'vent continuous':
-            self.execute_chamber_continuous('venting')
-
-        if operation == 'high vacuum':
-            self.execute_chamber_high_vacuum()
-
-    def execute_waiting(self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, threshold=0.1, **kwargs):
-        """wait for specified variables, including a Delay
-
-        target variables are 'self._setpoint_VARIABLE'
-            VARIABLE: temp, field, position, chamber
-        getfunc functions are 'self.getVARIABLE'
-            VARIABLE: Temperature, Field, Position, Chamber
-
-        returns: None
-        """
-        if Temp:
-            self.wait_for(target=self._setpoint_temp,
-                          getfunc=self.getTemperature,
-                          threshold=threshold)
-        if Field:
-            self.wait_for(target=self._setpoint_field,
-                          getfunc=self.getField,
-                          threshold=threshold)
-        if Position:
-            self.wait_for(target=self._setpoint_position,
-                          getfunc=self.getPosition,
-                          threshold=threshold)
-        if Chamber:
-            self.wait_for(target=self._setpoint_chamber,
-                          getfunc=self.getChamber, threshold=0)
-
-        delay_start = 0
-        delay_step = 0.01
-        while delay_start < Delay & self._isRunning:
-            time.sleep(delay_step)
-            delay_start += delay_step
-
-    def execute_beep(self, length, frequency, **kwargs):
-        """beep for a certain time at a certain frequency
-
-        controlelled beep available on windows and linux, not on mac
-
-        length in seconds
-        frequency in Hertz
-        """
-        if platform.system() == 'Windows':
-            winsound.Beep(int(frequency), int(length * 1e3))
-        if platform.system() == 'Linux':
-            answer = os.system(f'beep -f {frequency} -l {length}')
-            if answer:
-                print('\a')  # ring the command lin bell
-                self.message_to_user(
-                    'The program "beep" had a problem. Maybe it is not installed?')
-        if platform.system() == 'Darwin':
-            print('\a')
-            self.message_to_user(
-                'no easily controllable beep function on mac available')
 
     def execute_scan_H(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, EndMode, **kwargs):
         '''execute a Field scan
@@ -394,8 +328,83 @@ class Sequence_runner(object):
 
                 self.executing_commands(commands)
 
+    def execute_chamber(self, operation, **kwargs):
+        """execute the specified chamber operation"""
+        if operation == 'seal immediate':
+            self.execute_chamber_seal()
+
+        if operation == 'purge then seal':
+            self.execute_chamber_purge()
+            self.execute_chamber_seal()
+
+        if operation == 'vent then seal':
+            self.execute_chamber_vent()
+            self.execute_chamber_seal()
+
+        if operation == 'pump continuous':
+            self.execute_chamber_continuous('pumping')
+
+        if operation == 'vent continuous':
+            self.execute_chamber_continuous('venting')
+
+        if operation == 'high vacuum':
+            self.execute_chamber_high_vacuum()
+
+    def execute_waiting(self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, threshold=0.1, **kwargs):
+        """wait for specified variables, including a Delay
+
+        target variables are 'self._setpoint_VARIABLE'
+            VARIABLE: temp, field, position, chamber
+        getfunc functions are 'self.getVARIABLE'
+            VARIABLE: Temperature, Field, Position, Chamber
+
+        returns: None
+        """
+        if Temp:
+            self.wait_for(target=self._setpoint_temp,
+                          getfunc=self.getTemperature,
+                          threshold=threshold)
+        if Field:
+            self.wait_for(target=self._setpoint_field,
+                          getfunc=self.getField,
+                          threshold=threshold)
+        if Position:
+            self.wait_for(target=self._setpoint_position,
+                          getfunc=self.getPosition,
+                          threshold=threshold)
+        if Chamber:
+            self.wait_for(target=self._setpoint_chamber,
+                          getfunc=self.getChamber, threshold=0)
+
+        delay_start = 0
+        delay_step = 0.01
+        while delay_start < Delay & self._isRunning:
+            time.sleep(delay_step)
+            delay_start += delay_step
+
+    def execute_beep(self, length, frequency, **kwargs):
+        """beep for a certain time at a certain frequency
+
+        controlelled beep available on windows and linux, not on mac
+
+        length in seconds
+        frequency in Hertz
+        """
+        if platform.system() == 'Windows':
+            winsound.Beep(int(frequency), int(length * 1e3))
+        if platform.system() == 'Linux':
+            answer = os.system(f'beep -f {frequency} -l {length}')
+            if answer:
+                print('\a')  # ring the command lin bell
+                self.message_to_user(
+                    'The program "beep" had a problem. Maybe it is not installed?')
+        if platform.system() == 'Darwin':
+            print('\a')
+            self.message_to_user(
+                'no easily controllable beep function on mac available')
+
     def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True):
-        """repeatedly check whether the temperature was reached,
+        """repeatedly check whether the respective value was reached,
             given the respective threshold, return once it has
             produce a possibility to abort the sequence, through
             repeated check for value, for breaking condition, and sleeping
@@ -410,9 +419,12 @@ class Sequence_runner(object):
             # sleep
             time.sleep(0.1)
 
-    def stop(self):
-        """stop the sequence execution by setting self._isRunning to False"""
-        self._isRunning = False
+    def execute_set_Temperature(self, Temp, SweepRate=None):
+        if SweepRate:
+            self.scan_T_programSweep(start=self.getTemperature(
+            ), end=Temp, Nsteps=1, temperatures=None, SweepRate=SweepRate)
+        else:
+            self.setTemperature(temperature=Temp)
 
     def execute_remark(self, remark: str) -> None:
         """use the given remark
@@ -446,18 +458,6 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def setTemperature(self, temperature: float) -> None:
-        """
-            Method to be overridden/injected by a child class
-            here, all logic which is needed to go to a
-            certain temperature directly
-            needs to be implemented.
-            TODO: override method
-        """
-        self._setpoint_temp = temperature
-        super().setTemperature(temperature=temperature)
-        # raise NotImplementedError
-
     def setField(self, field: float, EndMode: str) -> None:
         """
             Method to be overridden/injected by a child class
@@ -473,7 +473,19 @@ class Sequence_runner(object):
         """Method to be overridden/injected by a child class
         return bool stating success or failure (optional)
         """
-        super().setFieldEndMode(EndMode)
+        raise NotImplementedError
+
+    def setTemperature(self, temperature: float) -> None:
+        """
+            Method to be overridden/injected by a child class
+            here, all logic which is needed to go to a
+            certain temperature directly
+            needs to be implemented.
+            TODO: override method
+        """
+        self._setpoint_temp = temperature
+        super().setTemperature(temperature=temperature)
+        # raise NotImplementedError
 
     def getTemperature(self):
         """Read the temperature
