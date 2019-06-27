@@ -26,7 +26,7 @@ except ImportError:
 
 # from util import ScanningN
 
-from Sequence_editor import Sequence_parser
+from Sequence_parsing import Sequence_parser
 
 
 class BreakCondition(Exception):
@@ -34,7 +34,7 @@ class BreakCondition(Exception):
     pass
 
 
-def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> type(np.array()):
+def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> 'type(np.array())':
     """Map a function behaviour to an arbitrary Sequence
 
     Nsteps must be >= 2!
@@ -62,18 +62,18 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> type(np.array
 class Sequence_runner(object):
     """docstring for Sequence_Thread"""
 
-    def __init__(self, lock=None, sequence: list, isRunning=None, thresholds_waiting: dict = dict(Temp = 0.1, Field = 0.1, Position = 1), **kwargs):
+    def __init__(self, sequence: list, lock=None, isRunning=None, thresholds_waiting: dict = None, **kwargs):
         super().__init__(**kwargs)
         self._isRunning = True if isRunning is None else isRunning
         self.sequence = sequence
         self.lock = threading.Lock() if lock is None else lock
+        if thresholds_waiting is None:
+            self.thresholds_waiting = dict(Temp=0.1, Field=0.1, Position=1)
+        else:
+            self.thresholds_waiting = thresholds_waiting
 
         # self.mainthread = mainthread
         self.subrunner = None
-
-        # self.threshold_Temp = 0.1
-        # self.threshold_Field = 0.1
-        self.thresholds_waiting = thresholds_waiting
 
         # self.temp_VTI_offset = 5
 
@@ -105,6 +105,10 @@ class Sequence_runner(object):
                 self.message_to_user(f'An error occured: {e}. Did you maybe' +
                                      ' try to call a function/method which' +
                                      ' needs to be manually injected?')
+            except TypeError as e:
+                self.message_to_user(f'An error occured: {e}. Did you maybe' +
+                                     ' try to call a function/method which' +
+                                     ' needs to be manually injected?')
 
     def check_running(self):
         """check for the _isRunning flag, raise Exception if
@@ -133,7 +137,7 @@ class Sequence_runner(object):
             self.execute_chain_sequence(**entry)
         if entry['typ'] == 'remark':
             self.execute_remark(entry['DisplayText'])
-            
+
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)
         if entry['typ'] == 'scan_H':
@@ -167,7 +171,6 @@ class Sequence_runner(object):
             # has yet to be implemented!
             pass
 
-
     def execute_chamber(self, operation, **kwargs):
         """execute the specified chamber operation"""
 
@@ -191,7 +194,7 @@ class Sequence_runner(object):
         if operation == 'high vacuum':
             self.chamber_high_vacuum()
 
-    def execute_waiting(self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, threshold=0.1, **kwargs):
+    def execute_waiting(self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, **kwargs):
         """wait for specified variables, including a Delay
 
         target variables are 'self._setpoint_VARIABLE'
@@ -220,7 +223,7 @@ class Sequence_runner(object):
 
         delay_start = 0
         delay_step = 0.01
-        while delay_start < Delay & self._isRunning:
+        while (delay_start < Delay) & self._isRunning:
             time.sleep(delay_step)
             delay_start += delay_step
 
@@ -322,7 +325,7 @@ class Sequence_runner(object):
             timerlist = []
             for time in times:
                 timerlist.append(threading.Timer(
-                    time, self.executing_commands, commands=commands))
+                    time, self.executing_commands, kwargs=dict(commands=commands)))
                 timerlist[-1].start()
 
             while any([x.isAlive() for x in timerlist]):
@@ -365,8 +368,8 @@ class Sequence_runner(object):
                 approachFields = mapping_tofunc(lambda x: np.log(
                     x), start=first, end=field, Nsteps=10)
                 for t in approachFields:
-                    self.setField(field=field, EndMode='driven')
-                    self._setpoint_field = field
+                    self.setField(field=t, EndMode='driven')
+                    # self._setpoint_field = t
                     # self.checkStable_Temp(Temp=t,
                     #                       direction=np.sign(temp - first),
                     #                       ApproachMode='Fast')
@@ -382,8 +385,8 @@ class Sequence_runner(object):
 
         if ApproachMode == 'Sweep':
             self.scan_H_programSweep(
-                start=start, end=end, Nsteps=Nsteps, SweepRate=SweepRate, SpacingCode=SpacingCode)
-            for field in fields:
+                start=start, end=end, Nsteps=Nsteps, fields=fields, SweepRate=SweepRate, SpacingCode=SpacingCode, EndMode=EndMode)
+            for ct, field in enumerate(fields):
                 first = fields[0] if ct == 0 else fields[ct - 1]
                 self.checkField(Field=field,
                                 direction=np.sign(field - first),
@@ -416,7 +419,7 @@ class Sequence_runner(object):
                     x), start=first, end=temp, Nsteps=10)
                 for t in approachTemps:
                     self.setTemperature(t)
-                    self._setpoint_temp = t
+                    # self._setpoint_temp = t
                     self.checkStable_Temp(temp=t,
                                           direction=np.sign(temp - first),
                                           ApproachMode='Fast')
@@ -476,7 +479,7 @@ class Sequence_runner(object):
                                    ApproachMode='Sweep')
                 self.executing_commands(commands)
 
-    def execute_set_Temperature(self, Temp: float, SweepRate: float = None, ApproachMode: str, **kwargs) -> None:
+    def execute_set_Temperature(self, Temp: float, ApproachMode: str, SweepRate: float = None, **kwargs) -> None:
         """execute the set temperature command
 
         in case a SweepRate is supplied, use it in a scan_T fashion
@@ -493,7 +496,7 @@ class Sequence_runner(object):
         else:
             self.setTemperature(temperature=Temp)
 
-    def execute_set_Field(self, Field: float, SweepRate: float = None, EndMode: str, ApproachMode: str, **kwargs) -> None:
+    def execute_set_Field(self, Field: float, EndMode: str, ApproachMode: str, SweepRate: float = None, **kwargs) -> None:
         """execute the set Field command
 
         in case a SweepRate is supplied, use it in a scan_H fashion
@@ -506,7 +509,7 @@ class Sequence_runner(object):
         """
         if SweepRate:
             self.scan_H_programSweep(start=self.getField(
-            ), end=Field, Nsteps=2, fields=None, SweepRate=SweepRate)
+            ), end=Field, Nsteps=2, fields=None, SweepRate=SweepRate, EndMode=EndMode)
         else:
             self.setField(field=Field, EndMode=EndMode)
 
@@ -516,8 +519,7 @@ class Sequence_runner(object):
         shoud be overriden in case the remark means anything"""
         self.message_to_user(f'there is a remark: {remark}')
 
-    @staticmethod
-    def message_to_user(message: str) -> None:
+    def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
 
         default is printing to the command line
@@ -534,7 +536,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, SpacingCode: str = 'uniform', EndMode: str):
+    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, EndMode: str, SpacingCode: str = 'uniform'):
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
