@@ -34,7 +34,7 @@ class Sequence_CryostatGUI(Sequence_runner, AbstractEventhandlingThread):
     def setTempVTIOffset(self, offset):
         self.temp_VTI_offset = offset
 
-    def scan_T_programSweep(self, temperatures, SweepRate, SpacingCode):
+    def scan_T_programSweep(self, start, end, Nsteps, temperatures, SweepRate, SpacingCode):
         """
             program sweep for VTI
             program sweep for LakeShore
