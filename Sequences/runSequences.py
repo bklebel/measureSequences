@@ -73,9 +73,9 @@ class Sequence_runner(object):
             self.thresholds_waiting = thresholds_waiting
 
         # self.mainthread = mainthread
-        self.subrunner = None
 
         # self.temp_VTI_offset = 5
+        self.subrunner = None
 
         self.sensor_control = None  # needs to be set!
         self.sensor_sample = None   # needs to be set!
@@ -101,10 +101,10 @@ class Sequence_runner(object):
                 self.message_to_user(f'An error occured: {e}. Did you maybe' +
                                      ' try to call a function/method which' +
                                      ' needs to be manually overriden?')
-            except AttributeError as e:
-                self.message_to_user(f'An error occured: {e}. Did you maybe' +
-                                     ' try to call a function/method which' +
-                                     ' needs to be manually injected?')
+            # except AttributeError as e:
+            #     self.message_to_user(f'An error occured: {e}. Did you maybe' +
+            #                          ' try to call a function/method which' +
+            #                          ' needs to be manually injected?')
             except TypeError as e:
                 self.message_to_user(f'An error occured: {e}. Did you maybe' +
                                      ' try to call a function/method which' +
@@ -267,12 +267,14 @@ class Sequence_runner(object):
     def execute_chain_sequence(self, new_file_seq: str, **kwargs) -> None:
         """execute everything from a specified sequence"""
 
-        parser = Sequence_parser(sequence_file=new_file_seq)
+        print(new_file_seq[:-1])
+        parser = Sequence_parser(sequence_file=new_file_seq[:-1])
         commands = parser.data
 
-        self.subrunner = Sequence_runner(sequence=commands,
-                                         isRunning=self._isRunning,
-                                         thresholds_waiting=self.thresholds_waiting)
+        self.subrunner = self.__class__(sequence=commands,
+                                        isRunning=self._isRunning,
+                                        thresholds_waiting=self.thresholds_waiting,
+                                        lock=threading.Lock())
 
         done = self.subrunner.running()
         if done == 'Aborted':

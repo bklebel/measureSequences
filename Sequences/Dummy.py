@@ -65,6 +65,9 @@ class Dummy(Sequence_runner, Dummy_Functions):
             # with open(filename) as f:
             #     seq = json.load(f)
             super().__init__(sequence=seq, **kwargs)
+        else:
+            super().__init__(**kwargs)
+        # self.subrunner_class = Dummy
 
     def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode: str = 'uniform'):
         """
