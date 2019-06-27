@@ -60,11 +60,12 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> type(np.array
 class Sequence_runner(object):
     """docstring for Sequence_Thread"""
 
-    def __init__(self, lock, sequence: list, thresholds_waiting: dict = dict(Temp = 0.1, Field = 0.1, Position = 0.1), **kwargs):
+    def __init__(self, lock=None, sequence: list, isRunning=None, thresholds_waiting: dict = dict(Temp = 0.1, Field = 0.1, Position = 1), **kwargs):
         super().__init__(**kwargs)
-        self._isRunning = True
+        self._isRunning = True if isRunning is None else isRunning
         self.sequence = sequence
-        self.lock = lock
+        self.lock = threading.Lock() if lock is None else lock
+
         # self.mainthread = mainthread
 
         # self.threshold_Temp = 0.1
@@ -79,14 +80,17 @@ class Sequence_runner(object):
         self.scan_time_force = False
 
     def running(self):
-        # self.temp_setpoint = 0
+        """run the given sequence"""
+
         with self.lock:
             try:
                 self.executing_commands(self.sequence)
             except BreakCondition:
                 return 'Aborted!'
+        return 'Finished sequence!'
 
     def executing_commands(self, commands):
+        """execute all entries of the commands list"""
         for entry in commands:
             try:
                 self.execute_sequence_entry(entry)
@@ -100,6 +104,9 @@ class Sequence_runner(object):
                                      ' needs to be manually injected?')
 
     def check_running(self):
+        """check for the _isRunning flag, raise Exception if
+        the Sequence_runner was stopped
+        """
         if not self._isRunning:
             raise BreakCondition
 
@@ -108,6 +115,7 @@ class Sequence_runner(object):
         self._isRunning = False
 
     def execute_sequence_entry(self, entry):
+        """execute the one entry of a list of commands"""
         self.check_running()
 
         if entry['typ'] == 'Shutdown':
@@ -118,21 +126,23 @@ class Sequence_runner(object):
             self.execute_chamber(**entry)
         if entry['typ'] == 'beep':
             self.execute_beep(**entry)
+
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)
         if entry['typ'] == 'scan_H':
             self.execute_scan_H(**entry)
         if entry['typ'] == 'scan_time':
             self.execute_scan_time(**entry)
-
         if entry['typ'] == 'scan_position':
-            # has yet to be implemented!
-            pass
+            self.execute_scan_P(**entry)
 
         if entry['typ'] == 'set_T':
             self.execute_set_Temperature(**entry)
 
         if entry['typ'] == 'set_Field':
+            # has yet to be implemented!
+            pass
+        if entry['typ'] == 'set_Position':
             # has yet to be implemented!
             pass
         if entry['typ'] == 'chain sequence':
@@ -193,6 +203,8 @@ class Sequence_runner(object):
         else:
             # Experimental!
             # commands and stuff needs to be threadsafe!
+            # seems especialy unsafe if there is a chained sequence
+            # in one of the commands....
 
             timerlist = []
             for time in times:
@@ -210,10 +222,9 @@ class Sequence_runner(object):
                         x.join()
                     raise BreakCondition
 
-    def execute_scan_H(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, EndMode, **kwargs):
-        '''execute a Field scan
+    def execute_scan_H(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, EndMode: str, **kwargs) -> None:
+        '''execute a Field scan'''
 
-        '''
         if SpacingCode == 'uniform':
             fields = mapping_tofunc(lambda x: x, start, end, Nsteps)
 
@@ -268,7 +279,7 @@ class Sequence_runner(object):
 
         self.setFieldEndMode(EndMode=EndMode)
 
-    def execute_scan_T(self, start, end, Nsteps, SweepRate, SpacingCode, ApproachMode, commands, **kwargs):
+    def execute_scan_T(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, **kwargs) -> None:
         """perform a temperature scan with given parameters"""
 
         # building the individual temperatures to scan through
@@ -329,7 +340,7 @@ class Sequence_runner(object):
 
                 self.executing_commands(commands)
 
-    def execute_scan_P(self, start, end, Nsteps, speedindex, ApproachMode, commands, **kwargs) -> None:
+    def execute_scan_P(self, start: float, end: float, Nsteps: int, speedindex: int, ApproachMode: str, commands: list, **kwargs) -> None:
         """perform a position scan with the given parameters"""
 
         positions = mapping_tofunc(lambda x: x, start, end, Nsteps)
@@ -343,7 +354,14 @@ class Sequence_runner(object):
                 self.executing_commands(commands)
 
         if ApproachMode == 'Sweep':
-            pass
+            self.scan_P_programSweep(start=start, end=end, Nsteps=Nsteps,
+                                     positions=positions, speedindex=speedindex)
+            for ct, pos in enumerate(positions):
+                first = positions[0] if ct == 0 else positions[ct - 1]
+                self.checkPosition(position=pos,
+                                   direction=np.sign(pos - first),
+                                   ApproachMode='Sweep')
+                self.executing_commands(commands)
 
     def execute_chamber(self, operation, **kwargs):
         """execute the specified chamber operation"""
@@ -437,7 +455,7 @@ class Sequence_runner(object):
             # sleep
             time.sleep(0.1)
 
-    def execute_set_Temperature(self, Temp: float, SweepRate: float = None) -> None:
+    def execute_set_Temperature(self, Temp: float, SweepRate: float = None, ApproachMode: str) -> None:
         """execute the set temperature command
 
         in case a SweepRate is supplied, use it in a scan_T fashion
@@ -445,12 +463,31 @@ class Sequence_runner(object):
 
         Nsteps in the SweepRate mode is set to 2, implying
             the current temperature to be step 1 of 2
+
+        TODO: include ApproachModes
         """
         if SweepRate:
             self.scan_T_programSweep(start=self.getTemperature(
             ), end=Temp, Nsteps=2, temperatures=None, SweepRate=SweepRate)
         else:
             self.setTemperature(temperature=Temp)
+
+    def execute_set_Field(self, Field: float, SweepRate: float = None, EndMode: str, ApproachMode: str) -> None:
+        """execute the set Field command
+
+        in case a SweepRate is supplied, use it in a scan_H fashion
+        else just hard-set the Field
+
+        Nsteps in the SweepRate mode is set to 2, implying
+            the current field to be step 1 of 2
+
+        TODO: include ApproachModes
+        """
+        if SweepRate:
+            self.scan_H_programSweep(start=self.getField(
+            ), end=Field, Nsteps=2, fields=None, SweepRate=SweepRate)
+        else:
+            self.setField(field=Field, EndMode=EndMode)
 
     def execute_remark(self, remark: str) -> None:
         """use the given remark
@@ -468,19 +505,27 @@ class Sequence_runner(object):
         super().message_to_user(message)
         print(message)
 
-    def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode='uniform'):
+    def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode: str = 'uniform'):
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
-            the respective Sweep temperatures
+            the respective Sweep of temperatures
         """
         raise NotImplementedError
 
-    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, SpacingCode='uniform'):
+    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, SpacingCode: str = 'uniform', EndMode: str):
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
             the respective Sweep for field values
+        """
+        raise NotImplementedError
+
+    def scan_P_programSweep(self, start: float, end: float, Nsteps: float, positions: list, speedindex: float, SpacingCode: str = 'uniform'):
+        """
+            Method to be overriden by a child class
+            here, the devices should be programmed to start
+            the respective Sweep of positions
         """
         raise NotImplementedError
 
@@ -543,7 +588,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def getField(self):
+    def getField(self) -> float:
         """Read the Field
 
         Method to be overriden by child class
@@ -561,28 +606,74 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def checkStable_Temp(self, temp, direction=0, ApproachMode='Sweep'):
+    def checkStable_Temp(self, temp: float, direction: int = 0, ApproachMode: str = 'Sweep') -> bool:
         """wait for the temperature to stabilize
 
         param: Temp:
             the temperature which needs to be arrived to continue
-            function must block until the temperature has arrived at this temp!
+            function must block until the temperature has reached this value!
+            (apart from checking whether the sequence qas aborted)
 
         param: direction:
             indicates whether the 'Temp' should currently be
                 rising or falling
-                direction =  0: default, no information
+                direction =  0: default, no information / non-sweeping
                 direction =  1: temperature should be rising
                 direction = -1: temperature should be falling
 
         param: ApproachMode:
             specifies the mode of approach in the scan this function is called
+
+        method should be overriden - possibly some convenience functionality
+            will be added in the future
         """
         raise NotImplementedError
 
-    def checkField(self, Field: float, direction: int = 0, ApproachMode: str = 'Sweep'):
-        """check whether the Field has passed a certain value"""
-        pass
+    def checkField(self, Field: float, direction: int = 0, ApproachMode: str = 'Sweep') -> bool:
+        """check whether the Field has passed a certain value
+
+        param: Field:
+            the field which needs to be arrived to continue
+            function must block until the field has reached this value!
+            (apart from checking whether the sequence qas aborted)
+
+        param: direction:
+            indicates whether the 'Field' should currently be
+                rising or falling
+                direction =  0: default, no information / non-sweeping
+                direction =  1: temperature should be rising
+                direction = -1: temperature should be falling
+
+        param: ApproachMode:
+            specifies the mode of approach in the scan this function is called
+
+        method should be overriden - possibly some convenience functionality
+            will be added in the future
+        """
+        raise NotImplementedError
+
+    def checkPosition(self, position: float, direction: int = 0, ApproachMode: str = 'Sweep') -> bool:
+        """check whether the Field has passed a certain value
+
+        param: position:
+            the field which needs to be arrived to continue
+            function must block until the field has reached this value!
+            (apart from checking whether the sequence qas aborted)
+
+        param: direction:
+            indicates whether the 'Field' should currently be
+                rising or falling
+                direction =  0: default, no information / non-sweeping
+                direction =  1: temperature should be rising
+                direction = -1: temperature should be falling
+
+        param: ApproachMode:
+            specifies the mode of approach in the scan this function is called
+
+        method should be overriden - possibly some convenience functionality
+            will be added in the future
+        """
+        raise NotImplementedError
 
     def Shutdown(self):
         """Shut down instruments to a standby-configuration"""
