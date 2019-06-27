@@ -549,7 +549,7 @@ class Sequence_parser(object):
     @staticmethod
     def displaytext_set_temp(data):
         """generate the displaytext for a set temperature"""
-        return 'Set Temperature to {Temp} at {SweepRate}K/min (rate is only a wish...)'.format(**data)
+        return 'Set Temperature to {Temp} at {SweepRate}K/min, {ApproachMode}'.format(**data)
 
     @staticmethod
     def displatext_res_scan_exc(data):
@@ -581,7 +581,7 @@ class Sequence_parser(object):
     @staticmethod
     def displaytext_set_field(data):
         """generate the displaytext for a set field"""
-        return 'Set Field to {Field} at {SweepRate}T/min '.format(**data)
+        return 'Set Field to {Field} at {SweepRate}T/min, {ApproachMode}, {EndMode} '.format(**data)
 
     def parse_chamber(self, comm):
         '''parse a command for a chamber operation'''
@@ -609,6 +609,12 @@ class Sequence_parser(object):
         # TODO: Fast settle
         nums = self.read_nums(comm)
         dic = dict(typ='set_T', Temp=nums[0], SweepRate=nums[1])
+
+        if int(nums[2]) == 0:
+            dic['ApproachMode'] = 'Fast'
+        if int(nums[2]) == 1:
+            dic['ApproachMode'] = 'No O\'Shoot'
+
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_set_temp(dic)
         return dic
@@ -617,6 +623,18 @@ class Sequence_parser(object):
         """parse a command to set a single field"""
         nums = self.read_nums(comm)
         dic = dict(typ='set_Field', Field=nums[0], SweepRate=nums[1])
+        if int(nums[2]) == 0:
+            dic['ApproachMode'] = 'Linear'
+        if int(nums[2]) == 1:
+            dic['ApproachMode'] = 'No O\'Shoot'
+        if int(nums[2]) == 2:
+            dic['ApproachMode'] = 'Oscillate'
+
+        if int(nums[3]) == 0:
+            dic['EndMode'] = 'persistent'
+        if int(nums[3]) == 1:
+            dic['EndMode'] = 'driven'
+
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_set_field(dic)
         return dic
@@ -685,6 +703,7 @@ class Sequence_parser(object):
                    end=numbers[1],
                    SweepRate=numbers[2],
                    Nsteps=numbers[3])
+
         if int(numbers[4]) == 0:
             dic['SpacingCode'] = 'uniform'
         elif int(numbers[4]) == 1:
@@ -709,6 +728,7 @@ class Sequence_parser(object):
             dic['EndMode'] = 'persistent'
         if int(numbers[6]) == 1:
             dic['EndMode'] = 'driven'
+
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_scan_H(dic)
         return dic
