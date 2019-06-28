@@ -62,7 +62,7 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> 'type(np.arra
 class Sequence_runner(object):
     """docstring for Sequence_Thread"""
 
-    def __init__(self, sequence: list, lock=None, isRunning=None, thresholds_waiting: dict = None, **kwargs):
+    def __init__(self, sequence: list, lock=None, isRunning=None, thresholds_waiting: dict = None, **kwargs) -> None:
         super().__init__(**kwargs)
         self._isRunning = True if isRunning is None else isRunning
         self.sequence = sequence
@@ -82,7 +82,7 @@ class Sequence_runner(object):
 
         self.scan_time_force = False
 
-    def running(self):
+    def running(self) -> str:
         """run the given sequence"""
 
         with self.lock:
@@ -92,7 +92,7 @@ class Sequence_runner(object):
                 return 'Aborted!'
         return 'Sequence finished!'
 
-    def executing_commands(self, commands):
+    def executing_commands(self, commands: list) -> None:
         """execute all entries of the commands list"""
         for entry in commands:
             try:
@@ -110,20 +110,20 @@ class Sequence_runner(object):
                                      ' try to call a function/method which' +
                                      ' needs to be manually injected?')
 
-    def check_running(self):
+    def check_running(self) -> None:
         """check for the _isRunning flag, raise Exception if
         the Sequence_runner was stopped
         """
         if not self._isRunning:
             raise BreakCondition
 
-    def stop(self):
+    def stop(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
         if self.subrunner:
             self.subrunner.stop()
 
-    def execute_sequence_entry(self, entry):
+    def execute_sequence_entry(self, entry: dict) -> None:
         """execute the one entry of a list of commands"""
         self.check_running()
 
@@ -169,7 +169,7 @@ class Sequence_runner(object):
             # has yet to be implemented!
             pass
 
-    def execute_chamber(self, operation, **kwargs):
+    def execute_chamber(self, operation: str, **kwargs) -> None:
         """execute the specified chamber operation"""
 
         if operation == 'seal immediate':
@@ -225,7 +225,7 @@ class Sequence_runner(object):
             time.sleep(delay_step)
             delay_start += delay_step
 
-    def execute_beep(self, length, frequency, **kwargs):
+    def execute_beep(self, length: float, frequency: float, **kwargs) -> None:
         """beep for a certain time at a certain frequency
 
         controlelled beep available on windows and linux, not on mac
@@ -246,7 +246,7 @@ class Sequence_runner(object):
             self.message_to_user(
                 'no easily controllable beep function on mac available')
 
-    def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True, **kwargs):
+    def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True, **kwargs) -> None:
         """repeatedly check whether the respective value was reached,
             given the respective threshold, return once it has
             produce a possibility to abort the sequence, through
@@ -547,7 +547,7 @@ class Sequence_runner(object):
         super().message_to_user(message)
         # print(message)
 
-    def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode: str = 'uniform'):
+    def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode: str = 'uniform') -> None:
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
@@ -555,7 +555,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, EndMode: str, SpacingCode: str = 'uniform'):
+    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, EndMode: str, SpacingCode: str = 'uniform') -> None:
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
@@ -563,7 +563,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def scan_P_programSweep(self, start: float, end: float, Nsteps: float, positions: list, speedindex: float, SpacingCode: str = 'uniform'):
+    def scan_P_programSweep(self, start: float, end: float, Nsteps: float, positions: list, speedindex: float, SpacingCode: str = 'uniform') -> None:
         """
             Method to be overriden by a child class
             here, the devices should be programmed to start
@@ -717,39 +717,39 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def Shutdown(self):
+    def Shutdown(self) -> None:
         """Shut down instruments to a safe standby-configuration"""
         raise NotImplementedError
 
-    def chamber_purge(self):
+    def chamber_purge(self) -> bool:
         """purge the chamber
 
         must block until the chamber is purged
         """
         raise NotImplementedError
 
-    def chamber_vent(self):
+    def chamber_vent(self) -> bool:
         """vent the chamber
 
         must block until the chamber is vented
         """
         raise NotImplementedError
 
-    def chamber_seal(self):
+    def chamber_seal(self) -> bool:
         """seal the chamber
 
         must block until the chamber is sealed
         """
         raise NotImplementedError
 
-    def chamber_continuous(self, action):
+    def chamber_continuous(self, action) -> bool:
         """pump or vent the chamber continuously"""
         if action == 'pumping':
             raise NotImplementedError
         if action == 'venting':
             raise NotImplementedError
 
-    def chamber_high_vacuum(self):
+    def chamber_high_vacuum(self) -> bool:
         """pump the chamber to high vacuum
 
         must block until the chamber is  at high vacuum

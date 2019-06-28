@@ -266,20 +266,6 @@ class controls_hardware_disabled:
         self._lock.release()
 
 
-class locking:
-    """Context manager for handling a simple lock"""
-
-    def __init__(self, lock):
-        self.lock = lock
-        # print(lock)
-
-    def __enter__(self, *args, **kwargs):
-        self.lock.acquire()
-
-    def __exit__(self, *args, **kwargs):
-        self.lock.release()
-
-
 class AbstractThread(QObject):
     """Abstract thread class to be used with instruments """
 

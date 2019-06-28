@@ -20,7 +20,7 @@ class EOSException(Exception):
     pass
 
 
-def parse_binary(number):
+def parse_binary(number: int) -> list:
     """parse an integer number which represents a sum of bits
         returns a list with True and False, from back to front
     """
@@ -36,7 +36,7 @@ def parse_binary(number):
 class Sequence_parser(object):
     """Abstract Sequence parser, without GUI"""
 
-    def __init__(self, sequence_file=None, textnesting='   ', **kwargs):
+    def __init__(self, sequence_file: str = None, textnesting: str = '   ', **kwargs):
         """initialise important attributes"""
         super(Sequence_parser, self).__init__(**kwargs)
 
@@ -44,27 +44,27 @@ class Sequence_parser(object):
         self.textnesting = textnesting
         self.initialize_sequence(self.sequence_file)
 
-    def saving(self):
+    def saving(self)-> None:
         """save serialised versions of a sequence"""
         with open(self.sequence_file_p, 'wb') as output:
             pickle.dump(self.data, output, pickle.HIGHEST_PROTOCOL)
         with open(self.sequence_file_json, 'w') as output:
             output.write(json.dumps(self.data))
 
-    def change_file_location(self, fname):
+    def change_file_location(self, fname: str) -> None:
         self.sequence_file = os.path.splitext(fname)[0] + '.seq'
         self.sequence_file_p = os.path.splitext(self.sequence_file)[0] + '.pkl'
         self.sequence_file_json = os.path.splitext(
             self.sequence_file)[0] + '.json'
 
     @staticmethod
-    def construct_pattern(expressions):
+    def construct_pattern(expressions: list) -> str:
         pat = ''
         for e in expressions:
             pat = pat + r'|' + e
         return pat[1:]
 
-    def initialize_sequence(self, sequence_file):
+    def initialize_sequence(self, sequence_file: str) -> None:
         """parse a complete file of instructions"""
         if sequence_file:
             self.change_file_location(sequence_file)
@@ -86,7 +86,7 @@ class Sequence_parser(object):
             self.data = []
             self.sequence_file = ''
 
-    def read_sequence(self, file):
+    def read_sequence(self, file: str) -> (list, list):
         """read the whole sequence from a file"""
         with open(file, 'r') as f:
             data = f.readlines()  # .replace('\n', '')
@@ -98,7 +98,7 @@ class Sequence_parser(object):
         commands, textsequence = self.parse_nesting(data, -1)
         return commands, textsequence
 
-    def parse_nesting(self, lines_file, lines_index):
+    def parse_nesting(self, lines_file: int, lines_index: int) -> (list, list):
         """parse a nested command structure"""
         commands = []
         if lines_index == -1:
@@ -129,7 +129,7 @@ class Sequence_parser(object):
         del self.jumping_count[-1]
         return commands, textsequence
 
-    def add_text(self, text_list, dic):
+    def add_text(self, text_list: list, dic: dict) -> None:
         """build the un-nested list of displayed commands"""
         if 'commands' in dic:
             for c in dic['commands']:
@@ -140,7 +140,7 @@ class Sequence_parser(object):
                     print(c)
                 self.add_text(text_list, c)
 
-    def parse_line(self, lines_file, line, line_index):
+    def parse_line(self, lines_file: int, line: str, line_index: int) -> dict:
         """parse one line of a sequence file, possibly more if it is a scan"""
         line_found = self.p.findall(line)
 
@@ -219,7 +219,7 @@ class Sequence_parser(object):
 
         return dic
 
-    def parse_scan_arb(self, lines_file, line, lines_index):
+    def parse_scan_arb(self, lines_file: int, line: str, lines_index: int) -> dict:
         """parse a line in which a scan was defined"""
         # parse this scan instructions
         line_found = self.p.findall(line)[0]
@@ -249,12 +249,12 @@ class Sequence_parser(object):
         return dic
 
     @staticmethod
-    def read_nums(comm):
+    def read_nums(comm: str) -> list:
         """convert a string of numbers into a list of floats"""
         return [float(x) for x in searchf_number.findall(comm)]
 
     @staticmethod
-    def parse_binary_dataflags(number):
+    def parse_binary_dataflags(number: int) -> dict:
         """parse flags what to store"""
         nums = parse_binary(number)
         names = ['General Status', 'Temperature',
@@ -269,7 +269,7 @@ class Sequence_parser(object):
         return bare
 
     @staticmethod
-    def displaytext_waiting(data):
+    def displaytext_waiting(data: dict) -> str:
         """generate the displaytext for the wait function"""
         string = 'Wait for '
         separator = ', ' if data['Temp'] and data['Field'] else ''
@@ -285,34 +285,34 @@ class Sequence_parser(object):
         return string
 
     @staticmethod
-    def displaytext_scan_T(data):
+    def displaytext_scan_T(data: dict) -> str:
         """generate the displaytext for the temperature scan"""
         return 'Scan Temperature from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}'.format(**data)
 
     @staticmethod
-    def displaytext_scan_H(data):
+    def displaytext_scan_H(data: dict) -> str:
         """generate the displaytext for the field scan"""
         return 'Scan Field from {start} to {end} in {Nsteps} steps, {SweepRate}K/min, {ApproachMode}, {SpacingCode}, {EndMode}'.format(**data)
 
     @staticmethod
-    def displaytext_set_temp(data):
+    def displaytext_set_temp(data: dict) -> str:
         """generate the displaytext for a set temperature"""
         return 'Set Temperature to {Temp} at {SweepRate}K/min, {ApproachMode}'.format(**data)
 
     @staticmethod
-    def displaytext_set_position(data):
+    def displaytext_set_position(data: dict) -> str:
         """generate the displaytext for a set temperature"""
         return 'Move Sample Position to {position} with SpeedIndex ' + \
                '{speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
 
     @staticmethod
-    def displatext_res_scan_exc(data):
+    def displatext_res_scan_exc(data: dict) -> str:
         """generate the displaytext for an excitation scan"""
         # TODO - finish this up
         return 'Scanning RES Excitation'
 
     @staticmethod
-    def displaytext_res(data):
+    def displaytext_res(data: dict) -> str:
         """generate the displaytext for the resistivity measurement"""
         # TODO - finish this up
         text = 'Resistivity '
@@ -333,11 +333,11 @@ class Sequence_parser(object):
         return text
 
     @staticmethod
-    def displaytext_set_field(data):
+    def displaytext_set_field(data: dict) -> str:
         """generate the displaytext for a set field"""
         return 'Set Field to {Field} at {SweepRate}T/min, {ApproachMode}, {EndMode} '.format(**data)
 
-    def parse_chamber(self, comm):
+    def parse_chamber(self, comm: str) -> dict:
         '''parse a command for a chamber operation'''
         nums = self.read_nums(comm)
         dic = dict(typ='chamber_operation')
@@ -358,7 +358,7 @@ class Sequence_parser(object):
             'Chamber Op: {operation}'.format(**dic)
         return dic
 
-    def parse_set_temp(self, comm):
+    def parse_set_temp(self, comm: str) -> dict:
         """parse a command to set a single temperature"""
         # TODO: Fast settle
         nums = self.read_nums(comm)
@@ -373,7 +373,7 @@ class Sequence_parser(object):
             self.nesting_level + self.displaytext_set_temp(dic)
         return dic
 
-    def parse_set_field(self, comm):
+    def parse_set_field(self, comm: str) -> dict:
         """parse a command to set a single field"""
         nums = self.read_nums(comm)
         dic = dict(typ='set_Field', Field=nums[0], SweepRate=nums[1])
@@ -393,7 +393,7 @@ class Sequence_parser(object):
             self.nesting_level + self.displaytext_set_field(dic)
         return dic
 
-    def parse_set_position(self, comm):
+    def parse_set_position(self, comm: str) -> dict:
         """parse a command to set a single temperature"""
         # TODO: Fast settle
         nums = self.read_nums(comm)
@@ -413,7 +413,7 @@ class Sequence_parser(object):
             self.nesting_level + self.displaytext_set_position(dic)
         return dic
 
-    def parse_waiting(self, comm):
+    def parse_waiting(self, comm: str) -> dict:
         """parse a command to wait for certain values"""
         nums = self.read_nums(comm)
         dic = dict(typ='Wait',
@@ -427,7 +427,7 @@ class Sequence_parser(object):
         return dic
         # dic.update(local_dic.update(dict(DisplayText=self.parse_waiting(local_dic))))
 
-    def parse_chain_sequence(self, comm):
+    def parse_chain_sequence(self, comm: str) -> dict:
         """parse a command to chain a sequence file"""
         file = comm[4:]
         return dict(typ='chain sequence', new_file_seq=file,
@@ -435,7 +435,7 @@ class Sequence_parser(object):
         # print('CHN', comm, dic)
         # return dic
 
-    def parse_scan_T(self, comm):
+    def parse_scan_T(self, comm: str) -> dict:
         """parse a command to do a temperature scan"""
         temps = self.read_nums(comm)
         # temps are floats!
@@ -466,7 +466,7 @@ class Sequence_parser(object):
             self.nesting_level + self.displaytext_scan_T(dic)
         return dic
 
-    def parse_scan_H(self, comm):
+    def parse_scan_H(self, comm: str) -> dict:
         '''parse a command to do a field scan'''
         numbers = self.read_nums(comm)
         if len(numbers) < 7:
@@ -507,7 +507,7 @@ class Sequence_parser(object):
             self.nesting_level + self.displaytext_scan_H(dic)
         return dic
 
-    def parse_scan_time(self, comm):
+    def parse_scan_time(self, comm: str) -> dict:
         nums = self.read_nums(comm)
         if len(nums) < 3:
             raise AssertionError(
@@ -524,7 +524,7 @@ class Sequence_parser(object):
             'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'
         return dic
 
-    def parse_scan_P(self, comm):
+    def parse_scan_P(self, comm: str) -> dict:
         nums = self.read_nums(comm)
         if len(nums) < 4:
             raise AssertionError(
@@ -550,7 +550,7 @@ class Sequence_parser(object):
                 **dic)
         return dic
 
-    def parse_beep(self, comm):
+    def parse_beep(self, comm: str) -> dict:
         '''parse a command to beep for a certain time at a certain frequency'''
         nums = self.read_nums(comm)
         if len(nums) < 2:
@@ -561,7 +561,7 @@ class Sequence_parser(object):
             'Beep for {length}secs at {frequency}Hz'.format(**dic)
         return dic
 
-    def parse_res_change_datafile(self, comm):
+    def parse_res_change_datafile(self, comm: str) -> dict:
         """parse a command to change the datafile"""
         file = searchf_string.findall(comm)
         return dict(typ='res_change_datafile', new_file_data=file,
@@ -572,7 +572,7 @@ class Sequence_parser(object):
         # print('CDF', comm, dic)
         # return dic
 
-    def parse_res_datafilecomment(self, comm):
+    def parse_res_datafilecomment(self, comm: str) -> dict:
         """parse a command to write a comment to the datafile"""
         comment = searchf_string.findall(comm)[0]
         dic = dict(typ='res_datafilecomment',
@@ -581,7 +581,7 @@ class Sequence_parser(object):
                    'Datafile Comment: {}'.format(comment))
         return dic
 
-    def parse_res(self, comm):
+    def parse_res(self, comm: str) -> dict:
         """parse a command to measure resistivity"""
         nums = self.read_nums(comm)
         dataflags = self.parse_binary_dataflags(int(nums[0]))
@@ -608,7 +608,7 @@ class Sequence_parser(object):
             self.nesting_level + self.displaytext_res(data)
         return data
 
-    def parse_res_scan_excitation(self, comm):
+    def parse_res_scan_excitation(self, comm: str) -> dict:
         """parse a command to do an excitation scan"""
         nums = self.read_nums(comm)
         scan_setup = []
@@ -640,7 +640,7 @@ class Sequence_parser(object):
         return data
 
     @staticmethod
-    def parse_res_bridge_setup(nums):
+    def parse_res_bridge_setup(nums: list) -> dict:
         """parse the res bridge setup for an excitation scan"""
         bridge_setup = []
         bridge_setup.append(nums[:5])
