@@ -155,14 +155,10 @@ class Sequence_runner(object):
             self.execute_set_Position(**entry)
 
         if entry['typ'] == 'res_change_datafile':
-            # has yet to be implemented!
-            pass
+            self.execute_res_change_datafile(**entry)
         if entry['typ'] == 'res_datafilecomment':
-            # has yet to be implemented!
-            pass
+            self.execute_res_datafilecomment(**entry)
         if entry['typ'] == 'res_measure':
-            # has yet to be implemented!
-            pass
             self.execute_res_measure(**entry)
         if entry['typ'] == 'res_scan_excitation':
             # has yet to be implemented!
@@ -542,12 +538,14 @@ class Sequence_runner(object):
         # print(reading_count)
 
         for ct in range(reading_count):
-            values_measured.append(self.res_measure(dataflags=dataflags, bridge_conf=bridge_conf))
+            values_measured.append(self.res_measure(
+                dataflags=dataflags, bridge_conf=bridge_conf))
 
         keys_corrupted = []
         for key in values_measured[0]:
             try:
-                values_transposed[key] = [values_measured[i][key] for i in range(reading_count)]
+                values_transposed[key] = [values_measured[i][key]
+                                          for i in range(reading_count)]
             except KeyError as e:
                 keys_corrupted.append(key)
                 self.message_to_user(f'An error occured: {e}. Something went wrong in the resistivity measuring procedure.')
@@ -558,10 +556,20 @@ class Sequence_runner(object):
                 continue
             if key not in keys_corrupted:
                 values_merged['mean'][key] = np.mean(values_transposed[key])
-                values_merged['median'][key] = np.median(values_transposed[key])
+                values_merged['median'][key] = np.median(
+                    values_transposed[key])
                 values_merged['stddev'][key] = np.std(values_transposed[key])
 
         self.measuring_store_data(data=values_merged, datafile=self.datafile)
+
+    def execute_res_datafilecomment(self, comment: str, **kwargs) -> None:
+        """execute the resistivity: datafile-comment command"""
+        self.res_datafilecomment(comment=comment, datafile=self.datafile)
+
+    def execute_res_change_datafile(self, new_file_data: str, mode: str, **kwargs) -> None:
+        """execute the resistivity: datafile-comment command"""
+        self.datafile = new_file_data
+        self.res_change_datafile(datafile=new_file_data, mode=mode)
 
     def execute_remark(self, remark: str, **kwargs) -> None:
         """use the given remark
@@ -798,5 +806,21 @@ class Sequence_runner(object):
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
             Must be overridden!
+        """
+        raise NotImplementedError
+
+    def res_datafilecomment(self, comment: str, datafile: str) -> None:
+        """write a comment to the datafile
+            Must be overridden!
+        """
+        raise NotImplementedError
+
+    def res_change_datafile(self, datafile: str, mode: str) -> None:
+        """write a comment to the datafile
+            Must be overridden!
+            mode ('a' or 'w') determines whether data should be
+                'a': appended
+                'w': written over
+            (to) the new datafile
         """
         raise NotImplementedError

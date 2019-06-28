@@ -263,12 +263,26 @@ class Dummy(Sequence_runner, Dummy_Functions):
         """Store measured data
             Must be overridden!
         """
-        print(f'measuring :: store the measured data: {data} in the file: {datafile}.')
+        print(f'measuring_store_data :: store the measured data: {data} in the file: {datafile}.')
 
+    def res_datafilecomment(self, comment: str, datafile: str) -> None:
+        """write a comment to the datafile
+            Must be overridden!
+        """
+        print(f'res_datafilecomment :: write a comment: {comment} in the datafile: {datafile}.')
 
-
+    def res_change_datafile(self, datafile: str, mode: str) -> None:
+        """change the datafile (location)
+            Must be overridden!
+            mode ('a' or 'w') determines whether data should be
+                'a': appended
+                'w': written over
+            (to) the new datafile
+        """
+        print(f'res_change_datafile :: change the datafile to: {datafile}, with mode {mode}.')
 
 if __name__ == '__main__':
-    dummy = Dummy(lock=Lock(), filename='seqfiles\\beepingsequence.seq', thresholds_waiting=dict(Temp=0.1, Field=0.1, Position=30))
+    dummy = Dummy(lock=Lock(), filename='seqfiles\\beepingsequence.seq',
+                  thresholds_waiting=dict(Temp=0.1, Field=0.1, Position=30))
     # QTimer.singleShot(3*1e3, lambda: dummy.stop())
     print(dummy.running())

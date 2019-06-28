@@ -262,7 +262,16 @@ class Sequence_parser(object):
                  'Chan 1 Resistivity', 'Chan 1 Excitation',
                  'Chan 2 Resistivity', 'Chan 2 Excitation',
                  'Chan 3 Resistivity', 'Chan 3 Excitation',
-                 'Chan 4 Resistivity', 'Chan 4 Excitation']
+                 'Chan 4 Resistivity', 'Chan 4 Excitation',
+
+                 'Sig Ch-1 Input Voltage', 'Sig Ch-1 Input Voltage',
+                 'Digital Inputs',
+                 'Dr Ch-1 Current', 'Dr Ch-1 Power',
+                 'Dr Ch-2 Current', 'Dr Ch-2 Power',
+                 'Sample Pressure',
+                 'Map 20', 'Map 21', 'Map 22', 'Map 23', 'Map 24',
+                 'Map 25', 'Map 26', 'Map 27', 'Map 28', 'Map 29',
+                 ]
         empty = [False for x in names]
         bare = dict(zip(names, empty))
         bare.update(dict(zip(names, nums)))
