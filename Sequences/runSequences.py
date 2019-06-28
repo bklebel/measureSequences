@@ -431,7 +431,7 @@ class Sequence_runner(object):
 
                     self.execute_waiting(Temp=True, Delay=10)
                 self.checkStable_Temp(
-                    Temp=temp, direction=0, ApproachMode=ApproachMode)
+                    temp=temp, direction=0, ApproachMode=ApproachMode)
 
                 self.executing_commands(commands)
 
