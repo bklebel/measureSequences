@@ -12,8 +12,7 @@ import json
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
-searchf_string = re.compile(r'''["']{2}(.*?)["']{2}''')
-searchf_string_speedtext = re.compile(r'''["']{1}(.*?)["']{1}''')
+searchf_string = re.compile(r'''["']{1,2}(.*?)["']{1,2}''')
 
 
 class EOSException(Exception):
@@ -401,7 +400,7 @@ class Sequence_parser(object):
         dic = dict(typ='set_P',
                    position=nums[0],
                    speedindex=int(nums[2]),  # 'Reduction Factor'
-                   speedtext=searchf_string_speedtext.findall(comm)[0])
+                   speedtext=searchf_string.findall(comm)[0])
 
         if int(nums[1]) == 0:
             dic['Mode'] = 'move to position'
@@ -582,23 +581,6 @@ class Sequence_parser(object):
                    'Datafile Comment: {}'.format(comment))
         return dic
 
-    @staticmethod
-    def parse_res_bridge_setup(nums):
-        """parse the res bridge setup for an excitation scan"""
-        bridge_setup = []
-        bridge_setup.append(nums[:5])
-        bridge_setup.append(nums[5:10])
-        bridge_setup.append(nums[10:15])
-        bridge_setup.append(nums[15:20])
-        for ct, channel in enumerate(bridge_setup):
-            bridge_setup[ct] = dict(limit_power_uW=channel[1],
-                                    limit_voltage_mV=channel[4])
-            bridge_setup[ct]['ac_dc'] = 'AC' if channel[2] == 0 else 'DC'
-            bridge_setup[ct]['on_off'] = True if channel[0] == 2 else False
-            bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
-                3] == 0 else 'Fast'
-        return bridge_setup
-
     def parse_res(self, comm):
         """parse a command to measure resistivity"""
         nums = self.read_nums(comm)
@@ -656,6 +638,23 @@ class Sequence_parser(object):
         data['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displatext_res_scan_exc(data)
         return data
+
+    @staticmethod
+    def parse_res_bridge_setup(nums):
+        """parse the res bridge setup for an excitation scan"""
+        bridge_setup = []
+        bridge_setup.append(nums[:5])
+        bridge_setup.append(nums[5:10])
+        bridge_setup.append(nums[10:15])
+        bridge_setup.append(nums[15:20])
+        for ct, channel in enumerate(bridge_setup):
+            bridge_setup[ct] = dict(limit_power_uW=channel[1],
+                                    limit_voltage_mV=channel[4])
+            bridge_setup[ct]['ac_dc'] = 'AC' if channel[2] == 0 else 'DC'
+            bridge_setup[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
+                3] == 0 else 'Fast'
+        return bridge_setup
 
 
 # if __name__ == '__main__':
