@@ -4,13 +4,16 @@
 
 Tools for an abstract sequence editor, parser and runner
 
-It can read PPMS (resistivity option) sequence files - an abstract class to run those sequences is being built currently.
+The `Sequence_parser` in `Sequence_parsing.py` can read PPMS (resistivity option) sequence files
+The `Sequence_runner` in `runSequences.py` contains all logic to run those sequences - however, this is must be inherited: There are many functions which need to be overridden or injected in order to function properly. A demonstration printing-dummy class can be found in `Dummy.py`
 
-Most of the generic commands are now implemented (in reading). It is possible to read arbitrarily nested scanning commands. Empty lines are ignored.  
+Most of the generic commands are implemented. It is possible to read arbitrarily nested scanning commands. Empty lines are ignored. In contrast to the logic in the PPMS, when chaining an additional sequence, after the completion of the chained sequence, the mother-sequence continues after the `chain_sequence` command. 
+Most of the running functionality has not yet been tested -- use at your own risk! 
 
 Commands implemented include:
 -   setting a temperature
 -   setting a field
+-   setting a position
 -   scanning temperature
 -   scanning field
 -   scanning position
@@ -20,7 +23,9 @@ Commands implemented include:
 -   waiting
 -   chain another sequence
 -   chamber operations
+-   showing a sequence file remark
 
+Commands only implemented in parsing:
 -   change the resistivity datafile
 -   print a res datafile comment
 -   measure resistivity
