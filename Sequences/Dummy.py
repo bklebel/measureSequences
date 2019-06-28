@@ -251,6 +251,22 @@ class Dummy(Sequence_runner, Dummy_Functions):
         """
         print(f'chamber_high_vacuum :: bringing the chamber to HV')
 
+    def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
+        """Measure resistivity
+            Must be overridden!
+            return dict with all data according to the set dataflags
+        """
+        print(f'res_measure :: measuring the resistivity with the following dataflags: {dataflags} and the following bridge configuration: {bridge_conf}')
+        return dict(res1=5, exc1=10, res2=8, exc2=10)
+
+    def measuring_store_data(self, data: dict, datafile: str) -> None:
+        """Store measured data
+            Must be overridden!
+        """
+        print(f'measuring :: store the measured data: {data} in the file: {datafile}.')
+
+
+
 
 if __name__ == '__main__':
     dummy = Dummy(lock=Lock(), filename='seqfiles\\beepingsequence.seq', thresholds_waiting=dict(Temp=0.1, Field=0.1, Position=30))

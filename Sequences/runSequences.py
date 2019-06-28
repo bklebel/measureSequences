@@ -77,9 +77,7 @@ class Sequence_runner(object):
         # self.temp_VTI_offset = 5
         self.subrunner = None
 
-        self.sensor_control = None  # needs to be set!
-        self.sensor_sample = None   # needs to be set!
-
+        self.datafile = ''
         self.scan_time_force = False
 
     def running(self) -> str:
@@ -105,10 +103,10 @@ class Sequence_runner(object):
             #     self.message_to_user(f'An error occured: {e}. Did you maybe' +
             #                          ' try to call a function/method which' +
             #                          ' needs to be manually injected?')
-            except TypeError as e:
-                self.message_to_user(f'An error occured: {e}. Did you maybe' +
-                                     ' try to call a function/method which' +
-                                     ' needs to be manually injected?')
+            # except TypeError as e:
+            #     self.message_to_user(f'An error occured: {e}. Did you maybe' +
+            #                          ' try to call a function/method which' +
+            #                          ' needs to be manually injected?')
 
     def check_running(self) -> None:
         """check for the _isRunning flag, raise Exception if
@@ -165,6 +163,7 @@ class Sequence_runner(object):
         if entry['typ'] == 'res_measure':
             # has yet to be implemented!
             pass
+            self.execute_res_measure(**entry)
         if entry['typ'] == 'res_scan_excitation':
             # has yet to be implemented!
             pass
@@ -532,6 +531,38 @@ class Sequence_runner(object):
             raise NotImplementedError(
                 'Mode "redefine present position" functionality not yet implemented')
 
+    def execute_res_measure(self, dataflags: dict, reading_count: int, bridge_conf: dict, **kwargs) -> None:
+        """execute the resistivity: measure command"""
+
+        values_measured = []
+        values_transposed = dict()
+        values_merged = dict(non_numeric=dict(), mean=dict(), median=dict(), stddev=dict())
+
+        reading_count = int(reading_count)
+        # print(reading_count)
+
+        for ct in range(reading_count):
+            values_measured.append(self.res_measure(dataflags=dataflags, bridge_conf=bridge_conf))
+
+        keys_corrupted = []
+        for key in values_measured[0]:
+            try:
+                values_transposed[key] = [values_measured[i][key] for i in range(reading_count)]
+            except KeyError as e:
+                keys_corrupted.append(key)
+                self.message_to_user(f'An error occured: {e}. Something went wrong in the resistivity measuring procedure.')
+
+        for key in values_transposed:
+            if any([not isinstance(val, (int, float)) for val in values_transposed[key]]):
+                values_merged['non_numeric'][key] = values_transposed[key]
+                continue
+            if key not in keys_corrupted:
+                values_merged['mean'][key] = np.mean(values_transposed[key])
+                values_merged['median'][key] = np.median(values_transposed[key])
+                values_merged['stddev'][key] = np.std(values_transposed[key])
+
+        self.measuring_store_data(data=values_merged, datafile=self.datafile)
+
     def execute_remark(self, remark: str, **kwargs) -> None:
         """use the given remark
 
@@ -753,5 +784,19 @@ class Sequence_runner(object):
         """pump the chamber to high vacuum
 
         must block until the chamber is  at high vacuum
+        """
+        raise NotImplementedError
+
+    def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
+        """Measure resistivity
+            Must be overridden!
+            return dict with all data according to the set dataflags
+            this dict should be flat, just numbers, no nesting
+        """
+        raise NotImplementedError
+
+    def measuring_store_data(self, data: dict, datafile: str) -> None:
+        """Store measured data
+            Must be overridden!
         """
         raise NotImplementedError
