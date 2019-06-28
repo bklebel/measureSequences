@@ -13,6 +13,7 @@ import json
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
 searchf_string = re.compile(r'''["']{2}(.*?)["']{2}''')
+searchf_string_speedtext = re.compile(r'''["']{1}(.*?)["']{1}''')
 
 
 class EOSException(Exception):
@@ -72,7 +73,8 @@ class Sequence_parser(object):
             exp = [r'TMP TEMP(.*?)$', r'FLD FIELD(.*?)$', r'SCAN(.*?)$',
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
                    r'LPI(.*?)$', r'SHT(.*?)DOWN', r'EN(.*?)EOS$', r'RES(.*?)$',
-                   r'BEP BEEP(.*?)$', r'CMB CHAMBER(.*?)$', r'REM(.*?)$']
+                   r'BEP BEEP(.*?)$', r'CMB CHAMBER(.*?)$', r'REM(.*?)$',
+                   r'MVP MOVE(.*?)$']
             self.p = re.compile(self.construct_pattern(
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
 
@@ -205,6 +207,10 @@ class Sequence_parser(object):
             # remark
             dic = dict(typ='remark', DisplayText=line_found[13])
 
+        elif line_found[14]:
+            # set position
+            dic = self.parse_set_position(line)
+
         # try:
         #     print(dic)
         # except NameError:
@@ -295,6 +301,12 @@ class Sequence_parser(object):
         return 'Set Temperature to {Temp} at {SweepRate}K/min, {ApproachMode}'.format(**data)
 
     @staticmethod
+    def displaytext_set_position(data):
+        """generate the displaytext for a set temperature"""
+        return 'Move Sample Position to {position} with SpeedIndex ' + \
+               '{speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
+
+    @staticmethod
     def displatext_res_scan_exc(data):
         """generate the displaytext for an excitation scan"""
         # TODO - finish this up
@@ -380,6 +392,26 @@ class Sequence_parser(object):
 
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_set_field(dic)
+        return dic
+
+    def parse_set_position(self, comm):
+        """parse a command to set a single temperature"""
+        # TODO: Fast settle
+        nums = self.read_nums(comm)
+        dic = dict(typ='set_P',
+                   position=nums[0],
+                   speedindex=int(nums[2]),  # 'Reduction Factor'
+                   speedtext=searchf_string_speedtext.findall(comm)[0])
+
+        if int(nums[1]) == 0:
+            dic['Mode'] = 'move to position'
+        if int(nums[1]) == 1:
+            dic['Mode'] = 'move to index and define'
+        if int(nums[1]) == 2:
+            dic['Mode'] = 'redefine present position'
+
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_set_position(dic)
         return dic
 
     def parse_waiting(self, comm):
@@ -624,3 +656,7 @@ class Sequence_parser(object):
         data['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displatext_res_scan_exc(data)
         return data
+
+
+# if __name__ == '__main__':
+#     a = Sequence_parser(sequence_file='seqfiles\\scanpos.seq')

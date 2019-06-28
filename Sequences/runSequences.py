@@ -153,10 +153,8 @@ class Sequence_runner(object):
             self.execute_set_Temperature(**entry)
         if entry['typ'] == 'set_Field':
             self.execute_set_Field(**entry)
-
         if entry['typ'] == 'set_Position':
-            # has yet to be implemented!
-            pass
+            self.execute_set_Position(**entry)
 
         if entry['typ'] == 'res_change_datafile':
             # has yet to be implemented!
@@ -240,7 +238,7 @@ class Sequence_runner(object):
         if platform.system() == 'Linux':
             answer = os.system(f'beep -f {frequency} -l {length}')
             if answer:
-                print('\a')  # ring the command lin bell
+                print('\a')  # ring the command line bell
                 self.message_to_user(
                     'The program "beep" had a problem. Maybe it is not installed?')
         if platform.system() == 'Darwin':
@@ -306,6 +304,11 @@ class Sequence_runner(object):
 
         elif SpacingCode == 'ln(t)':
             times = mapping_tofunc(lambda x: np.ln(x), 0, time, Nsteps)
+
+        if np.isclose(time, 0):
+            while self._isRunning:
+                self.executing_commands(commands)
+            self.check_running()
 
         if self.scan_time_force is False:
             for time in times[1:]:
@@ -515,11 +518,25 @@ class Sequence_runner(object):
         else:
             self.setField(field=Field, EndMode=EndMode)
 
+    def execute_set_Position(self, position: float, speedindex: int, Mode: str, **kwargs) -> None:
+        """execute the set Position command"""
+
+        if Mode == 'move to position':
+            self.setPosition(position=position, speedindex=speedindex)
+
+        if Mode == 'move to index and define':
+            raise NotImplementedError(
+                'Mode "move to index and define" functionality not yet implemented')
+
+        if Mode == 'redefine present position':
+            raise NotImplementedError(
+                'Mode "redefine present position" functionality not yet implemented')
+
     def execute_remark(self, remark: str, **kwargs) -> None:
         """use the given remark
 
         shoud be overriden in case the remark means anything"""
-        self.message_to_user(f'there is a remark: {remark}')
+        self.message_to_user(f'remark: {remark}')
 
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
@@ -528,7 +545,7 @@ class Sequence_runner(object):
         may be overriden!
         """
         super().message_to_user(message)
-        print(message)
+        # print(message)
 
     def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode: str = 'uniform'):
         """
@@ -592,7 +609,7 @@ class Sequence_runner(object):
         """
         raise NotImplementedError
 
-    def setPosition(self, position: float, speedindex: float) -> None:
+    def setPosition(self, position: float, speedindex: int) -> None:
         """
             Method to be overridden/injected by a child class
             here, all logic which is needed to go to a

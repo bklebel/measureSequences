@@ -1,7 +1,7 @@
 
 import numpy as np
 from threading import Lock
-import json
+# import json
 
 from runSequences import Sequence_runner
 from Sequence_parsing import Sequence_parser
@@ -253,6 +253,6 @@ class Dummy(Sequence_runner, Dummy_Functions):
 
 
 if __name__ == '__main__':
-    dummy = Dummy(lock=Lock(), filename='seqfiles\\beepingsequence.seq')
+    dummy = Dummy(lock=Lock(), filename='seqfiles\\beepingsequence.seq', thresholds_waiting=dict(Temp=0.1, Field=0.1, Position=30))
     # QTimer.singleShot(3*1e3, lambda: dummy.stop())
     print(dummy.running())
