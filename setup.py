@@ -4,14 +4,15 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="measureSequences-bklebel",
-    version="0.0.1",
+    name="measureSequences",
+    version="0.1.0",
     author="Benjamin Klebel",
     author_email="klebel.b@hotmail.com",
     description="parse and run QD PPMS sequence files",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/bklebel/measureSequences",
+    download_url='https://github.com/bklebel/measureSequences/archive/v0.1.0.tar.gz',
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
