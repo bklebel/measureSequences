@@ -1,32 +1,29 @@
 """Module containing an implementation of the Sequence editor
 this is only to display the parsed sequence, though there are elements which could be used in a full sequence editor
 
+Classes:
+    Window_ChangeDataFile
+    Window_waiting
+    Window_Tscan
+    Sequence_builder: sequence editor class
+        currently it just displays the parsed sequence
+        could be enhanced to enable writing sequences
+
 Author: bklebel (Benjamin Klebel)
 
 """
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
-# from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QTimer
-# from PyQt5.QtCore import QAbstractListModel, QFile, QIODevice, QModelIndex, Qt
 from PyQt5.uic import loadUi
 
-
 from copy import deepcopy
-
 import sys
-# import datetime
-# import pickle
-# import os
-# import re
 import threading
-# import json
 
 from util import Window_ui
 from Sequence_parsing import Sequence_parser
-# util will have to be changed eventually
-
 
 from qlistmodel import SequenceListModel
 from qlistmodel import ScanListModel

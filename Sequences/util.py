@@ -1,6 +1,20 @@
 """
 Utility module
-
+Functions:
+    ScanninN:
+        utility to build a linear spaced sequence based on
+            a starting point
+            an end point
+            the number of steps
+        returns the sequence and the stepsize
+        could be shortened by use of np.linspace
+    ScanninSize
+        utility to build a linear spaced sequence based on
+            a starting point
+            an end point
+            the stepsize
+        returns the sequence and the number of steps
+        could be shortened by use of np.linspace
 
 Classes:
 
@@ -16,6 +30,7 @@ from PyQt5.uic import loadUi
 
 
 def ScanningN(start, end, N):
+    """utility function for building linspaced number-sequences"""
     # N += 1
     stepsize = abs(end - start) / (N - 1)
     stepsize = abs(stepsize) if start < end else -abs(stepsize)
@@ -27,6 +42,7 @@ def ScanningN(start, end, N):
 
 
 def ScanningSize(start, end, parameter):
+    """utility function for building linspaced number-sequences"""
     stepsize = abs(parameter) if start < end else -abs(parameter)
     seq = []
     if start < end:

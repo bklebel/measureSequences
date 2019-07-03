@@ -1,17 +1,22 @@
 """Module containing the Sequence parser
     for PPMS Sequence files (resistivity option measurement commands only)
 
+Functions:
+    parse_binary
+
+Classes:
+    EOSException: End of Scan Exception,
+        to be used in the Sequence parser
+
+    Sequence_parser: Sequence parsing object
+
 Author: bklebel (Benjamin Klebel)
 
 """
-# from copy import deepcopy
 
-# import sys
-# import datetime
 import pickle
 import os
 import re
-# import threading
 import json
 
 
@@ -669,7 +674,3 @@ class Sequence_parser(object):
             bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
                 3] == 0 else 'Fast'
         return bridge_setup
-
-
-# if __name__ == '__main__':
-#     a = Sequence_parser(sequence_file='seqfiles\\scanpos.seq')

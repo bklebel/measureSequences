@@ -1,20 +1,14 @@
 """Module containing the class and possible helperfunctions to run a measuring sequence
 
+Classes:
+    Sequence_runner
+
 Author: bklebel (Benjamin Klebel)
 
 """
-
-
-# import sys
-# import datetime
-# import pickle
-# import re
 import time
 import threading
-# from copy import deepcopy
 import numpy as np
-# from numpy.polynomial.polynomial import polyfit
-# from itertools import combinations_with_replacement as comb
 
 # for sequence commands
 import platform
@@ -23,8 +17,6 @@ try:
     import winsound
 except ImportError:
     pass
-
-# from util import ScanningN
 
 from Sequence_parsing import Sequence_parser
 
@@ -532,7 +524,8 @@ class Sequence_runner(object):
 
         values_measured = []
         values_transposed = dict()
-        values_merged = dict(non_numeric=dict(), mean=dict(), median=dict(), stddev=dict())
+        values_merged = dict(non_numeric=dict(), mean=dict(),
+                             median=dict(), stddev=dict())
 
         reading_count = int(reading_count)
         # print(reading_count)
