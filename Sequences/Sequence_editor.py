@@ -1,3 +1,10 @@
+"""Module containing an implementation of the Sequence editor
+this is only to display the parsed sequence, though there are elements which could be used in a full sequence editor
+
+Author: bklebel (Benjamin Klebel)
+
+"""
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
 # from PyQt5.QtCore import pyqtSlot

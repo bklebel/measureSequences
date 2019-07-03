@@ -1,4 +1,9 @@
+"""Module containing the Sequence parser
+    for PPMS Sequence files (resistivity option measurement commands only)
 
+Author: bklebel (Benjamin Klebel)
+
+"""
 # from copy import deepcopy
 
 # import sys

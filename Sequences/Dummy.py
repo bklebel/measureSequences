@@ -1,4 +1,8 @@
+"""Module containing a dummy implementation for the Sequence runner
 
+Author: bklebel (Benjamin Klebel)
+
+"""
 import numpy as np
 from threading import Lock
 # import json
