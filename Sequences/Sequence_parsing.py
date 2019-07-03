@@ -577,7 +577,7 @@ class Sequence_parser(object):
 
     def parse_res_change_datafile(self, comm: str) -> dict:
         """parse a command to change the datafile"""
-        file = searchf_string.findall(comm)
+        file = searchf_string.findall(comm)[0]
         return dict(typ='res_change_datafile', new_file_data=file,
                     mode='a' if comm[-1] == '1' else 'w',
                     # a - appending, w - writing, can be inserted
