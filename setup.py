@@ -14,6 +14,7 @@ setuptools.setup(
     url="https://github.com/bklebel/measureSequences",
     download_url='https://github.com/bklebel/measureSequences/archive/v0.1.0.tar.gz',
     packages=setuptools.find_packages(),
+    install_requires=['numpy', 'PyQt5'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3.0",
