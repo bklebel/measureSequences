@@ -15,6 +15,32 @@ from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 
 
+def ScanningN(start, end, N):
+    # N += 1
+    stepsize = abs(end - start) / (N - 1)
+    stepsize = abs(stepsize) if start < end else -abs(stepsize)
+    seq = []
+    for __ in range(int(N)):
+        seq.append(start)
+        start += stepsize
+    return seq, stepsize
+
+
+def ScanningSize(start, end, parameter):
+    stepsize = abs(parameter) if start < end else -abs(parameter)
+    seq = []
+    if start < end:
+        while start < end:
+            seq.append(start)
+            start += stepsize
+    else:
+        while start > end:
+            seq.append(start)
+            start += stepsize
+    N = len(seq)
+    return seq, N
+
+
 class Window_ui(QtWidgets.QWidget):
     """Class for a small window, the UI of which is loaded from the .ui file
         emits a signal when being closed

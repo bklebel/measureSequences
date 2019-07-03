@@ -285,6 +285,7 @@ class Dummy(Sequence_runner, Dummy_Functions):
         """
         print(f'res_change_datafile :: change the datafile to: {datafile}, with mode {mode}.')
 
+
 if __name__ == '__main__':
     dummy = Dummy(lock=Lock(), filename='seqfiles\\beepingsequence.seq',
                   thresholds_waiting=dict(Temp=0.1, Field=0.1, Position=30))
