@@ -7,9 +7,9 @@ from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore
 # import math
 
-from util import ScanningN
+from .util import ScanningN
 # needed for the stepsize
-from util import ScanningSize
+from .util import ScanningSize
 
 
 class SequenceListModel(QtCore.QAbstractListModel):

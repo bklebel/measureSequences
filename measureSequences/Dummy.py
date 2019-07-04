@@ -7,8 +7,8 @@ import numpy as np
 from threading import Lock
 # import json
 
-from runSequences import Sequence_runner
-from Sequence_parsing import Sequence_parser
+from .runSequences import Sequence_runner
+from .Sequence_parsing import Sequence_parser
 
 
 class Dummy_Functions(object):

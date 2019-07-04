@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 
-from Sequence_parsing import Sequence_parser
+from .Sequence_parsing import Sequence_parser
 
 
 class BreakCondition(Exception):

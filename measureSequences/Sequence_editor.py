@@ -22,11 +22,11 @@ from copy import deepcopy
 import sys
 import threading
 
-from util import Window_ui
-from Sequence_parsing import Sequence_parser
+from .util import Window_ui
+from .Sequence_parsing import Sequence_parser
 
-from qlistmodel import SequenceListModel
-from qlistmodel import ScanListModel
+from .qlistmodel import SequenceListModel
+from .qlistmodel import ScanListModel
 
 
 class Window_ChangeDataFile(QtWidgets.QDialog):
