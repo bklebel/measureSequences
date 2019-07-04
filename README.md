@@ -23,4 +23,4 @@ update to newest version:
 `pip install --upgrade git+https://github.com/bklebel/measureSequences@master`
 
 latest stable release: 
-`pip install https://github.com/bklebel/measureSequences/archive/v0.1.0.tar.gz`
+`pip install https://github.com/bklebel/measureSequences/archive/v0.1.7.tar.gz`
