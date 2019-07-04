@@ -16,6 +16,7 @@ setuptools.setup(
     # packages=setuptools.find_packages(),
     packages=['measureSequences'],
     install_requires=['numpy', 'PyQt5'],
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3.0",
