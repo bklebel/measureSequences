@@ -18,4 +18,9 @@ Saving a serialised version of the parsed sequence will write a pickled object a
 
 ### Installing
 
-install with the command `pip install git+https://github.com/bklebel/measureSequences`
+Install with pip: 
+newest version:
+`pip install git+https://github.com/bklebel/measureSequences`
+
+latest stable release: 
+`pip install https://github.com/bklebel/measureSequences/archive/v0.1.0.tar.gz`
