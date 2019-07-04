@@ -281,6 +281,8 @@ class Sequence_builder(Window_ui, Sequence_parser):
     sig_runSequence = pyqtSignal(list)
     sig_abortSequence = pyqtSignal()
     sig_assertion = pyqtSignal(str)
+    sig_readSequence = pyqtSignal()
+    sig_clearedSequence = pyqtSignal()
 
     def __init__(self, parent=None, **kwargs):
         super().__init__(
@@ -306,81 +308,82 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.lineFileLocation.setText(self.sequence_file)
         self.lineFileLocation.textChanged.connect(
             lambda value: self.change_file_location(value))
-        self.pushClear.clicked.connect(lambda: self.model.clear_all())
         self.pushClear.clicked.connect(self.init_data)
 
-        # self.Button_RunSequence.clicked.connect(self.running_sequence)
-        self.Button_AbortSequence.clicked.connect(
-            lambda: self.sig_abortSequence.emit())
-        # self.model.sig_send.connect(lambda value: self.printing(value))
-        # self.model.sig_send.connect(self.saving)
-        # self.treeOptions.itemDoubleClicked['QTreeWidgetItem*', 'int'].connect(lambda value: self.listSequence.repaint())
-        # self.show()
+        self.Button_RunSequence.clicked.connect(self.running_sequence)
+        self.Button_AbortSequence.clicked.connect(self.aborting_sequence)
 
     def init_data(self):
-        self.data = []
+        self.model.clear_all()
+        self.initialize_sequence('')
+        self.sig_clearedSequence.emit()
 
     @ExceptionHandling
-    def running_sequence(self):
-        self.data = self.model.pass_data()
+    def running_sequence(self, dummy):
         self.sig_runSequence.emit(deepcopy(self.data))
+        self.Button_AbortSequence.setEnabled(True)
 
     @ExceptionHandling
-    def addItem_toSequence(self, text):
-        """
-            depending on the Item clicked, add the correct Item to the model,
-            which may involve executing a certain window
-        """
-        if text.text(0) == 'Wait':
-            # self.window_waiting.show()
-            self.window_waiting.exec_()  # if self.window_waiting.exec_():
-            # print('success')
+    def aborting_sequence(self):
+        self.sig_abortSequence.emit()
+        self.Button_AbortSequence.setEnabled(False)
 
-        if text.text(0) == 'Resistivity vs Temperature':
-            # here the Tscan comes
-            self.window_Tscan.exec_()
+    # @ExceptionHandling
+    # def addItem_toSequence(self, text):
+    #     """
+    #         depending on the Item clicked, add the correct Item to the model,
+    #         which may involve executing a certain window
+    #     """
+    #     if text.text(0) == 'Wait':
+    #         # self.window_waiting.show()
+    #         self.window_waiting.exec_()  # if self.window_waiting.exec_():
+    #         # print('success')
 
-        if text.text(0) == 'Chain Sequence':
-            new_file_seq, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Sequence',
-                                                                     'c:\\', "Sequence files (*.seq)")
-            data = dict(typ='chain sequence', new_file_seq=new_file_seq,
-                            DisplayText='Chain sequence: {}'.format(new_file_seq))
-            self.model.addItem(data)
-            QTimer.singleShot(1, lambda: self.listSequence.repaint())
+    #     if text.text(0) == 'Resistivity vs Temperature':
+    #         # here the Tscan comes
+    #         self.window_Tscan.exec_()
 
-        if text.text(0) == 'Change Data File':
-            raise NotImplementedError
-        if text.text(0) == 'Set Temperature':
-            raise NotImplementedError
-        if text.text(0) == 'Set Field':
-            raise NotImplementedError
-        if text.text(0) == 'Resistivity vs Field':
-            raise NotImplementedError
-        if text.text(0) == 'Shutdown Temperature Control':
-            raise NotImplementedError
+    #     if text.text(0) == 'Chain Sequence':
+    #         new_file_seq, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Sequence',
+    #                                                                  'c:\\', "Sequence files (*.seq)")
+    #         data = dict(typ='chain sequence', new_file_seq=new_file_seq,
+    #                         DisplayText='Chain sequence: {}'.format(new_file_seq))
+    #         self.model.addItem(data)
+    #         QTimer.singleShot(1, lambda: self.listSequence.repaint())
 
-    @ExceptionHandling
-    def addWaiting(self, data):
-        string = self.displaytext_waiting(data)
-        data.update(dict(DisplayText=string))
-        # self.listSequence.addItem(string)
-        self.model.addItem(data)
-        QTimer.singleShot(1, lambda: self.listSequence.repaint())
-        # QTimer.singleShot(10, self.model.)
+    #     if text.text(0) == 'Change Data File':
+    #         raise NotImplementedError
+    #     if text.text(0) == 'Set Temperature':
+    #         raise NotImplementedError
+    #     if text.text(0) == 'Set Field':
+    #         raise NotImplementedError
+    #     if text.text(0) == 'Resistivity vs Field':
+    #         raise NotImplementedError
+    #     if text.text(0) == 'Shutdown Temperature Control':
+    #         raise NotImplementedError
 
-    @ExceptionHandling
-    def addTscan(self, data):
-        string = self.displaytext_scan_T(data)
-        data.update(dict(DisplayText=string))
-        self.model.addItem(data)
-        QTimer.singleShot(1, lambda: self.listSequence.repaint())
+    # @ExceptionHandling
+    # def addWaiting(self, data):
+    #     string = self.displaytext_waiting(data)
+    #     data.update(dict(DisplayText=string))
+    #     # self.listSequence.addItem(string)
+    #     self.model.addItem(data)
+    #     QTimer.singleShot(1, lambda: self.listSequence.repaint())
+    #     # QTimer.singleShot(10, self.model.)
 
-    def addChangeDataFile(self, data):
-        pass
+    # @ExceptionHandling
+    # def addTscan(self, data):
+    #     string = self.displaytext_scan_T(data)
+    #     data.update(dict(DisplayText=string))
+    #     self.model.addItem(data)
+    #     QTimer.singleShot(1, lambda: self.listSequence.repaint())
 
-    @staticmethod
-    def printing(self, data):
-        print(data)
+    # def addChangeDataFile(self, data):
+    #     pass
+
+    # @staticmethod
+    # def printing(self, data):
+    #     print(data)
 
     # def saving(self):
     #     with open(self.sequence_file_p, 'wb') as output:
@@ -409,14 +412,13 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.Window_ChangeDataFile.sig_accept.connect(
             lambda value: self.addChangeDataFile(value))
 
-    @ExceptionHandling
+    # @ExceptionHandling
     def window_FileDialogSave(self):
         self.sequence_file_json, __ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As',
                                                                             'c:\\', "Serialised (*.json)")
         # last option is a file specifier, like 'Sequence Files (*.seq)'
         self.lineFileLocation_serialised.setText(self.sequence_file_json)
         self.sequence_file_p = self.sequence_file_json[:-4] + 'pkl'
-        # self.sequence_file_json = self.sequence_file[:-3] + 'json'
 
     # @ExceptionHandling
     def window_FileDialogOpen(self):
@@ -431,6 +433,8 @@ class Sequence_builder(Window_ui, Sequence_parser):
         super().initialize_sequence(sequence_file)
         for command in self.textsequence:
             self.model.addItem(command)
+        if sequence_file:
+            self.sig_readSequence.emit()
 
 
 if __name__ == '__main__':

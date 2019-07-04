@@ -195,7 +195,7 @@
       <string>RUN Sequence</string>
      </property>
      <property name="description">
-      <string>Save sequence to file and run it</string>
+      <string>Run the parsed sequence (unavailable without using package as extension)</string>
      </property>
     </widget>
    </item>
