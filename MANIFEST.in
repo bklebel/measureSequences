@@ -1,1 +1,1 @@
-include configurations/sequence.ui
+recursive-include configurations *.ui
