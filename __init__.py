@@ -1,1 +1,2 @@
 name = 'measureSequences'
+import Sequences
