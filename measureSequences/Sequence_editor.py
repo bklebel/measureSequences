@@ -28,6 +28,8 @@ from .Sequence_parsing import Sequence_parser
 from .qlistmodel import SequenceListModel
 from .qlistmodel import ScanListModel
 
+import pkg_resources
+
 
 class Window_ChangeDataFile(QtWidgets.QDialog):
     """docstring for Window_waiting"""
@@ -35,7 +37,7 @@ class Window_ChangeDataFile(QtWidgets.QDialog):
     sig_accept = pyqtSignal(dict)
     sig_reject = pyqtSignal()
 
-    def __init__(self, ui_file='.\\configurations\\Sequence_change_datafile.ui'):
+    def __init__(self, ui_file=pkg_resources.resource_filename(__name__, '.\\configurations\\Sequence_change_datafile.ui')):
         """build ui, build dict, connect to signals"""
         super().__init__()
         loadUi(ui_file, self)
@@ -81,7 +83,7 @@ class Window_waiting(QtWidgets.QDialog):
     sig_accept = pyqtSignal(dict)
     sig_reject = pyqtSignal()
 
-    def __init__(self, ui_file='.\\configurations\\sequence_waiting.ui'):
+    def __init__(self, ui_file=pkg_resources.resource_filename(__name__, '.\\configurations\\sequence_waiting.ui')):
         """build ui, build dict, connect to signals"""
         super().__init__()
         loadUi(ui_file, self)
@@ -119,7 +121,7 @@ class Window_Tscan(QtWidgets.QDialog):
     sig_reject = pyqtSignal()
     sig_updateScanListModel = pyqtSignal(dict)
 
-    def __init__(self, ui_file='.\\configurations\\sequence_scan_temperature.ui', **kwargs):
+    def __init__(self, ui_file=pkg_resources.resource_filename(__name__, "configurations\\sequence_scan_temperature.ui"), **kwargs):
         super().__init__(**kwargs)
         loadUi(ui_file, self)
 
@@ -280,7 +282,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
 
     def __init__(self, parent=None, **kwargs):
         super().__init__(
-            ui_file='.\\configurations\\sequence.ui', **kwargs)
+            ui_file=pkg_resources.resource_filename(__name__, "configurations\\sequence.ui"), **kwargs)
 
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
 
@@ -310,7 +312,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
         # self.model.sig_send.connect(lambda value: self.printing(value))
         # self.model.sig_send.connect(self.saving)
         # self.treeOptions.itemDoubleClicked['QTreeWidgetItem*', 'int'].connect(lambda value: self.listSequence.repaint())
-        self.show()
+        # self.show()
 
     def init_data(self):
         self.data = []
