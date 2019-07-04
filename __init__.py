@@ -1,2 +1,0 @@
-name = 'measureSequences'
-import Sequences
