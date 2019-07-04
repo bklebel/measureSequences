@@ -5,14 +5,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="measureSequences",
-    version="0.1.6",
+    version="0.1.7",
     author="Benjamin Klebel",
     author_email="klebel.b@hotmail.com",
     description="parse and run QD PPMS sequence files",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/bklebel/measureSequences",
-    download_url='https://github.com/bklebel/measureSequences/archive/0.1.6.tar.gz',
+    download_url='https://github.com/bklebel/measureSequences/archive/0.1.7.tar.gz',
     # packages=setuptools.find_packages(),
     packages=['measureSequences'],
     install_requires=['numpy', 'PyQt5', 'functools'],
