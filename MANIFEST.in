@@ -1,1 +1,1 @@
-recursive-include configurations *.ui
+global-include *.ui
