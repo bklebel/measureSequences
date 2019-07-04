@@ -28,6 +28,52 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 
+import functools
+import inspect
+
+
+def ExceptionSignal(thread, func, e_type, err):
+    """Emit assertion-signal with relevant information"""
+    thread.sig_assertion.emit('{}: {}: {}: {}'.format(
+        thread.__name__,
+        func.__name__,
+        e_type,
+        err.args[0]))
+
+
+def ExceptionHandling(func):
+    @functools.wraps(func)
+    def wrapper_ExceptionHandling(*args, **kwargs):
+        if inspect.isclass(type(args[0])):
+            try:
+                return func(*args, **kwargs)
+            except AssertionError as e_ass:
+                ExceptionSignal(args[0], func, 'Assertion', e_ass)
+
+            except TypeError as e_type:
+                ExceptionSignal(args[0], func, 'Type', e_type)
+
+            except KeyError as e_key:
+                ExceptionSignal(args[0], func, 'Key', e_key)
+
+            except ValueError as e_val:
+                ExceptionSignal(args[0], func, 'Value', e_val)
+
+            except AttributeError as e_attr:
+                ExceptionSignal(args[0], func, 'Attribute', e_attr)
+
+            except NotImplementedError as e_implement:
+                ExceptionSignal(args[0], func, 'NotImplemented', e_implement)
+
+            except OSError as e:
+                ExceptionSignal(args[0], func, 'OSError', e)
+
+            except IndexError as e:
+                ExceptionSignal(args[0], func, 'IndexError', e)
+        else:
+            print('There is a bug!! ' + func.__name__)
+    return wrapper_ExceptionHandling
+
 
 def ScanningN(start, end, N):
     """utility function for building linspaced number-sequences"""

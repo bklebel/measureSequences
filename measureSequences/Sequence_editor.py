@@ -23,6 +23,7 @@ import sys
 import threading
 
 from .util import Window_ui
+from .util import ExceptionHandling
 from .Sequence_parsing import Sequence_parser
 
 from .qlistmodel import SequenceListModel
@@ -279,12 +280,14 @@ class Sequence_builder(Window_ui, Sequence_parser):
 
     sig_runSequence = pyqtSignal(list)
     sig_abortSequence = pyqtSignal()
+    sig_assertion = pyqtSignal(str)
 
     def __init__(self, parent=None, **kwargs):
         super().__init__(
             ui_file=pkg_resources.resource_filename(__name__, "configurations\\sequence.ui"), **kwargs)
 
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
+        self.__name__ = 'Sequence_builder'
 
         QTimer.singleShot(0, self.initialize_all_windows)
         # QTimer.singleShot(
@@ -317,10 +320,12 @@ class Sequence_builder(Window_ui, Sequence_parser):
     def init_data(self):
         self.data = []
 
+    @ExceptionHandling
     def running_sequence(self):
         self.data = self.model.pass_data()
         self.sig_runSequence.emit(deepcopy(self.data))
 
+    @ExceptionHandling
     def addItem_toSequence(self, text):
         """
             depending on the Item clicked, add the correct Item to the model,
@@ -354,6 +359,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
         if text.text(0) == 'Shutdown Temperature Control':
             raise NotImplementedError
 
+    @ExceptionHandling
     def addWaiting(self, data):
         string = self.displaytext_waiting(data)
         data.update(dict(DisplayText=string))
@@ -362,6 +368,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
         QTimer.singleShot(1, lambda: self.listSequence.repaint())
         # QTimer.singleShot(10, self.model.)
 
+    @ExceptionHandling
     def addTscan(self, data):
         string = self.displaytext_scan_T(data)
         data.update(dict(DisplayText=string))
@@ -381,6 +388,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
     #     with open(self.sequence_file_json, 'w') as output:
     #         output.write(json.dumps(self.data))
 
+    @ExceptionHandling
     def initialize_all_windows(self):
         self.initialise_window_waiting()
         self.initialise_window_Tscan()
@@ -401,6 +409,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.Window_ChangeDataFile.sig_accept.connect(
             lambda value: self.addChangeDataFile(value))
 
+    @ExceptionHandling
     def window_FileDialogSave(self):
         self.sequence_file_json, __ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As',
                                                                             'c:\\', "Serialised (*.json)")
@@ -409,12 +418,14 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.sequence_file_p = self.sequence_file_json[:-4] + 'pkl'
         # self.sequence_file_json = self.sequence_file[:-3] + 'json'
 
+    # @ExceptionHandling
     def window_FileDialogOpen(self):
         self.sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
                                                                        'c:\\', "Sequence files (*.seq)")
         self.lineFileLocation.setText(self.sequence_file)
         self.initialize_sequence(self.sequence_file)
 
+    @ExceptionHandling
     def initialize_sequence(self, sequence_file):
         """build & run the sequence parsing, add items to the display model"""
         super().initialize_sequence(sequence_file)
