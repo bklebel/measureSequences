@@ -15,7 +15,7 @@ setuptools.setup(
     download_url='https://github.com/bklebel/measureSequences/archive/0.1.7.tar.gz',
     # packages=setuptools.find_packages(),
     packages=['measureSequences'],
-    install_requires=['numpy', 'PyQt5', 'functools'],
+    install_requires=['numpy', 'PyQt5'],
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
