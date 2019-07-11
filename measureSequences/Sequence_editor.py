@@ -291,7 +291,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
         self.__name__ = 'Sequence_builder'
 
-        QTimer.singleShot(0, self.initialize_all_windows)
+        # QTimer.singleShot(0, self.initialize_all_windows)
         # QTimer.singleShot(
         # 0, lambda: self.initialize_sequence(self.sequence_file))
 
