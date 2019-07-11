@@ -25,6 +25,10 @@ searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
 searchf_string = re.compile(r'''["']{1,2}(.*?)["']{1,2}''')
 
 
+# PPMS = 'PPMS'
+# MPMSold = 'MPMSold'
+
+
 class EOSException(Exception):
     """Exception to raise if an EOS was encountered"""
     pass
@@ -235,6 +239,10 @@ class Sequence_parser(object):
         line_found = self.p.findall(line)[0]
 
         dic = dict(typ=None)
+        # if self.device == 'PPMS':
+        #     Hidentifier = 'H'
+        # elif self.device == 'MPMSold':
+        #     Hidentifier = 'B'
         if line_found[2][0] == 'H':
             # Field
             dic = self.parse_scan_H(line)
