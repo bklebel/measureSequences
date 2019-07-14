@@ -218,7 +218,7 @@ class Sequence_parser(object):
 
         elif line_found[13]:
             # remark
-            dic = dict(typ='remark', DisplayText=line_found[13])
+            dic = self.parse_remark(line_found[13])
 
         elif line_found[14]:
             # set position
@@ -363,6 +363,15 @@ class Sequence_parser(object):
     def displaytext_set_field(data: dict) -> str:
         """generate the displaytext for a set field"""
         return 'Set Field to {Field} at {SweepRate}T/min, {ApproachMode}, {EndMode} '.format(**data)
+
+    def parse_remark(self, comm: str) -> dict:
+        """parse a remark
+
+        This could be overwritten in case the remarks have a special structure
+        which could be designed for a certain instrument/measurement"""
+        return dict(typ='remark',
+                    text=comm,
+                    DisplayText=self.textnesting * self.nesting_level + comm)
 
     def parse_chamber(self, comm: str) -> dict:
         '''parse a command for a chamber operation'''
