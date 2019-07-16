@@ -443,9 +443,10 @@ class Sequence_runner(object):
 
             for ct, temp in enumerate(temperatures):
 
-                first = temperatures[0] if ct == 0 else temperatures[ct - 1]
+                first = temperatures[0]
+                last = temperatures[-1]
                 self.checkStable_Temp(temp=temp,
-                                      direction=np.sign(temp - first),
+                                      direction=np.sign(last - first),
                                       ApproachMode='Sweep')
 
                 self.executing_commands(commands)
@@ -572,7 +573,7 @@ class Sequence_runner(object):
         shoud be overriden in case the remark means anything"""
         self.message_to_user(f'remark: {remark}')
 
-    def execute_sequence_message(self, timeout_waiting_min: float, message_direct: str, email_receiver: str, email_subject: str, email_cc: str, email_message: str, email_attachement_path: str, message_type: str) -> None:
+    def execute_sequence_message(self, timeout_waiting_min: float, message_direct: str, email_receiver: str, email_subject: str, email_cc: str, email_message: str, email_attachement_path: str, message_type: str, **kwargs) -> None:
         """display the sequence message to the user, possibly send email
 
         the sequence should continue to run after the message was cleared,
