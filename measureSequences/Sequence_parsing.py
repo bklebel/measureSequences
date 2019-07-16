@@ -87,7 +87,7 @@ class Sequence_parser(object):
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
                    r'LPI(.*?)$', r'SHT(.*?)DOWN', r'EN(.*?)EOS$', r'RES(.*?)$',
                    r'BEP BEEP(.*?)$', r'CMB CHAMBER(.*?)$', r'REM(.*?)$',
-                   r'MVP MOVE(.*?)$']
+                   r'MVP MOVE(.*?)$', r'MES(.*?)$']
             self.p = re.compile(self.construct_pattern(
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
 
@@ -223,6 +223,10 @@ class Sequence_parser(object):
         elif line_found[14]:
             # set position
             dic = self.parse_set_position(line)
+
+        elif line_found[15]:
+            # sequence message
+            dic = self.parse_sequence_message(line)
 
         # try:
         #     print(dic)
@@ -675,6 +679,36 @@ class Sequence_parser(object):
             self.nesting_level + self.displatext_res_scan_exc(data)
         return data
 
+    def parse_sequence_message(self, comm: str) -> dict:
+        """parse a command for a message to the user
+        this should block the sequence execution at least
+        timeout_waiting_min minutes"""
+        nums = self.read_nums(comm)
+        strings = searchf_string.findall(comm)
+        if nums[1] == 0:
+            message_type = 'Information'
+        if nums[1] == 1:
+            message_type = 'Warning'
+        if nums[1] == 2:
+            message_type = 'Error'
+        if len(strings) > 5:
+            attachement_path = strings[5]
+        else:
+            attachement_path = None
+
+        dic =  dict(typ='sequence_message',
+                    timeout_waiting_min=nums[0],
+                    message_direct=strings[0],
+                    email_receiver=strings[1],
+                    email_subject=strings[2],
+                    email_cc=strings[3],
+                    email_message=strings[4],
+                    email_attachement_path=attachement_path,
+                    message_type=message_type)
+        print(dic)
+        return dic
+
+
     @staticmethod
     def parse_res_bridge_setup(nums: list) -> dict:
         """parse the res bridge setup for an excitation scan"""
@@ -691,3 +725,4 @@ class Sequence_parser(object):
             bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
                 3] == 0 else 'Fast'
         return bridge_setup
+
