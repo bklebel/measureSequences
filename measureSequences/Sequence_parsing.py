@@ -705,7 +705,6 @@ class Sequence_parser(object):
                    email_message=strings[4],
                    email_attachement_path=attachement_path,
                    message_type=message_type)
-        print(dic)
         return dic
 
     @staticmethod
