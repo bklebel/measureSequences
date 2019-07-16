@@ -324,7 +324,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.Button_AbortSequence.setEnabled(True)
 
     @ExceptionHandling
-    def aborting_sequence(self):
+    def aborting_sequence(self, dummy):
         self.sig_abortSequence.emit()
         self.Button_AbortSequence.setEnabled(False)
 
