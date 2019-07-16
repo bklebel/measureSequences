@@ -126,7 +126,9 @@ class Sequence_runner(object):
         if entry['typ'] == 'chain sequence':
             self.execute_chain_sequence(**entry)
         if entry['typ'] == 'remark':
-            self.execute_remark(entry['DisplayText'])
+            self.execute_remark(entry['text'])
+        if entry['typ'] == 'sequence_message':
+            self.execute_sequence_message(**entry)
 
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)
@@ -569,6 +571,14 @@ class Sequence_runner(object):
 
         shoud be overriden in case the remark means anything"""
         self.message_to_user(f'remark: {remark}')
+
+    def execute_sequence_message(self, timeout_waiting_min: float, message_direct: str, email_receiver: str, email_subject=: str, email_cc: str, email_message: str, email_attachement_path: str, message_type: str) -> None:
+        """display the sequence message to the user, possibly send email
+
+        the sequence should continue to run after the message was cleared,
+        or the timeout_waiting_min time in minutes has passed
+        should be overridden for advanced options! """
+        self.message_to_user(f'sequence message: {message_type}: {message_direct}')
 
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
