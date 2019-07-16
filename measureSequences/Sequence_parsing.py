@@ -337,7 +337,7 @@ class Sequence_parser(object):
                '{speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
 
     @staticmethod
-    def displatext_res_scan_exc(data: dict) -> str:
+    def displaytext_res_scan_exc(data: dict) -> str:
         """generate the displaytext for an excitation scan"""
         # TODO - finish this up
         return 'Scanning RES Excitation'
@@ -367,6 +367,11 @@ class Sequence_parser(object):
     def displaytext_set_field(data: dict) -> str:
         """generate the displaytext for a set field"""
         return 'Set Field to {Field} at {SweepRate}T/min, {ApproachMode}, {EndMode} '.format(**data)
+
+    @staticmethod
+    def displaytext_sequence_message(data: dict) -> str:
+        """generate the displaytext for the sequence message"""
+        return 'SeqMes {timeout_waiting_min}min, {message_type}, {message_direct}, Email To {email_receiver}, {email_cc}, {email_subject}, {email_message}, attachements: {email_attachement_path}'.format(**data)
 
     def parse_remark(self, comm: str) -> dict:
         """parse a remark
@@ -676,7 +681,7 @@ class Sequence_parser(object):
                     n_steps=n_steps,
                     reading_count=reading_count)
         data['DisplayText'] = self.textnesting * \
-            self.nesting_level + self.displatext_res_scan_exc(data)
+            self.nesting_level + self.displaytext_res_scan_exc(data)
         return data
 
     def parse_sequence_message(self, comm: str) -> dict:
@@ -704,7 +709,10 @@ class Sequence_parser(object):
                    email_cc=strings[3],
                    email_message=strings[4],
                    email_attachement_path=attachement_path,
-                   message_type=message_type)
+                   message_type=message_type,)
+
+        dic['DisplayText'] = self.textnesting * \
+            self.nesting_level + self.displaytext_sequence_message(dic)
         return dic
 
     @staticmethod
