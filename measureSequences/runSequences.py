@@ -408,14 +408,14 @@ class Sequence_runner(object):
         # approaching very slowly:
         if ApproachMode == "No O\'Shoot":
             for ct, temp in enumerate(temperatures):
-                first = temperatures[0] if ct == 0 else temperatures[ct - 1]
                 approachTemps = mapping_tofunc(lambda x: np.log(
                     x), start=first, end=temp, Nsteps=10)
                 for t in approachTemps:
                     self.setTemperature(t)
                     # self._setpoint_temp = t
                     self.checkStable_Temp(temp=t,
-                                          direction=np.sign(temp - first),
+                                          direction=np.sign(
+                                              temperatures[-1] - temperatures[0]),
                                           ApproachMode='Fast')
 
                     self.execute_waiting(Temp=True, Delay=10)
@@ -427,11 +427,11 @@ class Sequence_runner(object):
         # approaching rather fast:
         if ApproachMode == 'Fast':
             for ct, temp in enumerate(temperatures):
-                first = temperatures[0] if ct == 0 else temperatures[ct - 1]
 
                 self.setTemperature(temp)
                 self.checkStable_Temp(temp=temp,
-                                      direction=np.sign(temp - first),
+                                      direction=np.sign(
+                                          temperatures[-1] - temperatures[0]),
                                       ApproachMode=ApproachMode)
 
                 self.executing_commands(commands)
@@ -443,10 +443,9 @@ class Sequence_runner(object):
 
             for ct, temp in enumerate(temperatures):
 
-                first = temperatures[0]
-                last = temperatures[-1]
                 self.checkStable_Temp(temp=temp,
-                                      direction=np.sign(last - first),
+                                      direction=np.sign(
+                                          temperatures[-1] - temperatures[0]),
                                       ApproachMode='Sweep')
 
                 self.executing_commands(commands)
