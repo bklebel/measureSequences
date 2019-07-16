@@ -696,18 +696,17 @@ class Sequence_parser(object):
         else:
             attachement_path = None
 
-        dic =  dict(typ='sequence_message',
-                    timeout_waiting_min=nums[0],
-                    message_direct=strings[0],
-                    email_receiver=strings[1],
-                    email_subject=strings[2],
-                    email_cc=strings[3],
-                    email_message=strings[4],
-                    email_attachement_path=attachement_path,
-                    message_type=message_type)
+        dic = dict(typ='sequence_message',
+                   timeout_waiting_min=nums[0],
+                   message_direct=strings[0],
+                   email_receiver=strings[1],
+                   email_subject=strings[2],
+                   email_cc=strings[3],
+                   email_message=strings[4],
+                   email_attachement_path=attachement_path,
+                   message_type=message_type)
         print(dic)
         return dic
-
 
     @staticmethod
     def parse_res_bridge_setup(nums: list) -> dict:
@@ -725,4 +724,3 @@ class Sequence_parser(object):
             bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
                 3] == 0 else 'Fast'
         return bridge_setup
-
