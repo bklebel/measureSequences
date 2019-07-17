@@ -102,8 +102,6 @@ class Sequence_parser(object):
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
 
             self.data, self.textsequence = self.read_sequence(sequence_file)
-            # print(
-            # 'done -----------------------------------------------------------------')
 
         else:
             self.textsequence = []
@@ -114,14 +112,12 @@ class Sequence_parser(object):
         """read the whole sequence from a file"""
         with open(file, 'r') as f:
             data = f.readlines()  # .replace('\n', '')
-        print('reading sequence:', file)
 
         # preparing variables
         self.jumping_count = [0, 0]
         self.nesting_level = 0
         # parse sequence
         commands, textsequence = self.parse_nesting(data, -1)
-        # print('read sequence: ', commands)
         return commands, textsequence
 
     def parse_nesting(self, lines_file: int, lines_index: int) -> (list, list):
@@ -453,7 +449,6 @@ class Sequence_parser(object):
         """parse a command to set a single temperature"""
         # TODO: Fast settle
         nums = self.read_nums(comm)
-        print(nums)
         dic = dict(typ='set_P',
                    position=nums[0],
                    speedindex=int(nums[2]),  # 'Reduction Factor'
@@ -489,7 +484,6 @@ class Sequence_parser(object):
         file = comm[4:]
         return dict(typ='chain sequence', new_file_seq=file,
                     DisplayText=self.textnesting * self.nesting_level + 'Chain sequence: {}'.format(comm))
-        # print('CHN', comm, dic)
         # return dic
 
     def parse_scan_T(self, comm: str) -> dict:
@@ -700,10 +694,8 @@ class Sequence_parser(object):
         """parse a command for a message to the user
         this should block the sequence execution at least
         timeout_waiting_min minutes"""
-        print('parsing message')
         nums = self.read_nums(comm)
         strings = parse_strings(comm)
-        print(nums, strings)
         if nums[1] == 0:
             message_type = 'Information'
         if nums[1] == 1:
@@ -724,10 +716,8 @@ class Sequence_parser(object):
                    email_message=strings[4],
                    email_attachement_path=attachement_path,
                    message_type=message_type,)
-        print('did parse message:', dic)
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_sequence_message(dic)
-        print('did parse message:', dic)
         return dic
 
     @staticmethod
