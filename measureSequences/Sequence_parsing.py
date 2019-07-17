@@ -693,15 +693,16 @@ class Sequence_parser(object):
         print('parsing message')
         nums = self.read_nums(comm)
         strings = searchf_string.findall(comm)
+        print(nums, strings)
         if nums[1] == 0:
             message_type = 'Information'
         if nums[1] == 1:
             message_type = 'Warning'
         if nums[1] == 2:
             message_type = 'Error'
-        if len(strings) > 5:
+        try:
             attachement_path = strings[5]
-        else:
+        except IndexError:
             attachement_path = None
 
         dic = dict(typ='sequence_message',
