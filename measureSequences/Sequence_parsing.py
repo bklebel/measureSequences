@@ -47,6 +47,16 @@ def parse_binary(number: int) -> list:
     return nums
 
 
+def parse_strings(string):
+    a = [[y for y in x if y] for x in searchf_string.findall(string)]
+    for ct, x in enumerate(a):
+        try:
+            a[ct] = a[ct][0]
+        except IndexError:
+            a[ct] = ''
+    return a
+
+
 class Sequence_parser(object):
     """Abstract Sequence parser, without GUI"""
 
@@ -447,7 +457,7 @@ class Sequence_parser(object):
         dic = dict(typ='set_P',
                    position=nums[0],
                    speedindex=int(nums[2]),  # 'Reduction Factor'
-                   speedtext=[x for x in searchf_string.findall(comm) if x][0])
+                   speedtext=parse_strings(comm)[0])
 
         if int(nums[1]) == 0:
             dic['Mode'] = 'move to position'
@@ -610,7 +620,7 @@ class Sequence_parser(object):
 
     def parse_res_change_datafile(self, comm: str) -> dict:
         """parse a command to change the datafile"""
-        file = [x for x in searchf_string.findall(comm) if x][0]
+        file = parse_strings(comm)[0]
         return dict(typ='res_change_datafile', new_file_data=file,
                     mode='a' if comm[-1] == '1' else 'w',
                     # a - appending, w - writing, can be inserted
@@ -621,7 +631,7 @@ class Sequence_parser(object):
 
     def parse_res_datafilecomment(self, comm: str) -> dict:
         """parse a command to write a comment to the datafile"""
-        comment = [x for x in searchf_string.findall(comm) if x][0]
+        comment = parse_strings(comm)[0]
         dic = dict(typ='res_datafilecomment',
                    comment=comment,
                    DisplayText=self.textnesting * self.nesting_level +
@@ -692,7 +702,7 @@ class Sequence_parser(object):
         timeout_waiting_min minutes"""
         print('parsing message')
         nums = self.read_nums(comm)
-        strings = [x for x in searchf_string.findall(comm) if x]
+        strings = parse_strings(comm)
         print(nums, strings)
         if nums[1] == 0:
             message_type = 'Information'
@@ -701,7 +711,7 @@ class Sequence_parser(object):
         if nums[1] == 2:
             message_type = 'Error'
         try:
-            attachement_path = strings[5]
+            attachement_path = strings[5:]
         except IndexError:
             attachement_path = None
 
