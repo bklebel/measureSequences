@@ -430,6 +430,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
             self.sequence_file = sequence_file
             self.lineFileLocation.setText(self.sequence_file)
             self.initialize_sequence(self.sequence_file)
+            self.setWindowTitle(self.sequence_file)
 
     @ExceptionHandling
     def initialize_sequence(self, sequence_file):
