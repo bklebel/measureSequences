@@ -345,8 +345,7 @@ class Sequence_parser(object):
     @staticmethod
     def displaytext_set_position(data: dict) -> str:
         """generate the displaytext for a set temperature"""
-        return 'Move Sample Position to {position} with SpeedIndex ' + \
-               '{speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
+        return 'Move Sample Position to {position} with SpeedIndex {speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
 
     @staticmethod
     def displaytext_res_scan_exc(data: dict) -> str:
