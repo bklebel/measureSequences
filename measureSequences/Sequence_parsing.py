@@ -22,7 +22,7 @@ import json
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
-searchf_string = re.compile(r'''["']{1,2}(.*?)["']{1,2}''')
+searchf_string = re.compile(r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}''')
 
 
 # PPMS = 'PPMS'
