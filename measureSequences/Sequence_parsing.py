@@ -690,6 +690,7 @@ class Sequence_parser(object):
         """parse a command for a message to the user
         this should block the sequence execution at least
         timeout_waiting_min minutes"""
+        print('parsing message')
         nums = self.read_nums(comm)
         strings = searchf_string.findall(comm)
         if nums[1] == 0:
@@ -715,6 +716,7 @@ class Sequence_parser(object):
 
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_sequence_message(dic)
+        print('did parse message:', dic)
         return dic
 
     @staticmethod
