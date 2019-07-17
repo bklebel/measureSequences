@@ -713,7 +713,7 @@ class Sequence_parser(object):
                    email_message=strings[4],
                    email_attachement_path=attachement_path,
                    message_type=message_type,)
-
+        print('did parse message:', dic)
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_sequence_message(dic)
         print('did parse message:', dic)
