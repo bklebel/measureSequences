@@ -48,6 +48,7 @@ def parse_binary(number: int) -> list:
 
 
 def parse_strings(string):
+    """parse all strings in one line"""
     a = [[y for y in x if y] for x in searchf_string.findall(string)]
     for ct, x in enumerate(a):
         try:
