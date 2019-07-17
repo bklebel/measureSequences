@@ -82,7 +82,6 @@ class Sequence_parser(object):
         """parse a complete file of instructions"""
         if sequence_file:
             self.change_file_location(sequence_file)
-            print('reading sequence:', sequence_file)
 
             exp = [r'TMP TEMP(.*?)$', r'FLD FIELD(.*?)$', r'SCAN(.*?)$',
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
@@ -105,12 +104,14 @@ class Sequence_parser(object):
         """read the whole sequence from a file"""
         with open(file, 'r') as f:
             data = f.readlines()  # .replace('\n', '')
+        print('reading sequence:', file)
 
         # preparing variables
         self.jumping_count = [0, 0]
         self.nesting_level = 0
         # parse sequence
         commands, textsequence = self.parse_nesting(data, -1)
+        print('read sequence: ', commands)
         return commands, textsequence
 
     def parse_nesting(self, lines_file: int, lines_index: int) -> (list, list):
