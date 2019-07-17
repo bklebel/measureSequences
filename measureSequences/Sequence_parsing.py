@@ -22,7 +22,7 @@ import json
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
-searchf_string = re.compile(r'''["']{1,2}(.*?)["']{1,2}''')
+searchf_string = re.compile(r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}''')
 
 
 # PPMS = 'PPMS'
@@ -45,6 +45,16 @@ def parse_binary(number: int) -> list:
     for ct, num in enumerate(nums):
         nums[ct] = True if int(num) else False
     return nums
+
+
+def parse_strings(string):
+    a = [[y for y in x if y] for x in searchf_string.findall(string)]
+    for ct, x in enumerate(a):
+        try:
+            a[ct] = a[ct][0]
+        except IndexError:
+            a[ct] = ''
+    return a
 
 
 class Sequence_parser(object):
@@ -92,8 +102,6 @@ class Sequence_parser(object):
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
 
             self.data, self.textsequence = self.read_sequence(sequence_file)
-            # print(
-            # 'done -----------------------------------------------------------------')
 
         else:
             self.textsequence = []
@@ -333,8 +341,7 @@ class Sequence_parser(object):
     @staticmethod
     def displaytext_set_position(data: dict) -> str:
         """generate the displaytext for a set temperature"""
-        return 'Move Sample Position to {position} with SpeedIndex ' + \
-               '{speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
+        return 'Move Sample Position to {position} with SpeedIndex {speedindex} ({speedtext}), Mode: {Mode}'.format(**data)
 
     @staticmethod
     def displaytext_res_scan_exc(data: dict) -> str:
@@ -445,7 +452,7 @@ class Sequence_parser(object):
         dic = dict(typ='set_P',
                    position=nums[0],
                    speedindex=int(nums[2]),  # 'Reduction Factor'
-                   speedtext=searchf_string.findall(comm)[0])
+                   speedtext=parse_strings(comm)[0])
 
         if int(nums[1]) == 0:
             dic['Mode'] = 'move to position'
@@ -477,7 +484,6 @@ class Sequence_parser(object):
         file = comm[4:]
         return dict(typ='chain sequence', new_file_seq=file,
                     DisplayText=self.textnesting * self.nesting_level + 'Chain sequence: {}'.format(comm))
-        # print('CHN', comm, dic)
         # return dic
 
     def parse_scan_T(self, comm: str) -> dict:
@@ -608,7 +614,7 @@ class Sequence_parser(object):
 
     def parse_res_change_datafile(self, comm: str) -> dict:
         """parse a command to change the datafile"""
-        file = searchf_string.findall(comm)[0]
+        file = parse_strings(comm)[0]
         return dict(typ='res_change_datafile', new_file_data=file,
                     mode='a' if comm[-1] == '1' else 'w',
                     # a - appending, w - writing, can be inserted
@@ -619,7 +625,7 @@ class Sequence_parser(object):
 
     def parse_res_datafilecomment(self, comm: str) -> dict:
         """parse a command to write a comment to the datafile"""
-        comment = searchf_string.findall(comm)[0]
+        comment = parse_strings(comm)[0]
         dic = dict(typ='res_datafilecomment',
                    comment=comment,
                    DisplayText=self.textnesting * self.nesting_level +
@@ -689,16 +695,16 @@ class Sequence_parser(object):
         this should block the sequence execution at least
         timeout_waiting_min minutes"""
         nums = self.read_nums(comm)
-        strings = searchf_string.findall(comm)
+        strings = parse_strings(comm)
         if nums[1] == 0:
             message_type = 'Information'
         if nums[1] == 1:
             message_type = 'Warning'
         if nums[1] == 2:
             message_type = 'Error'
-        if len(strings) > 5:
-            attachement_path = strings[5]
-        else:
+        try:
+            attachement_path = strings[5:]
+        except IndexError:
             attachement_path = None
 
         dic = dict(typ='sequence_message',
@@ -710,7 +716,6 @@ class Sequence_parser(object):
                    email_message=strings[4],
                    email_attachement_path=attachement_path,
                    message_type=message_type,)
-
         dic['DisplayText'] = self.textnesting * \
             self.nesting_level + self.displaytext_sequence_message(dic)
         return dic

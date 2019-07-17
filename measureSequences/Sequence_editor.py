@@ -319,12 +319,12 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.sig_clearedSequence.emit()
 
     @ExceptionHandling
-    def running_sequence(self, dummy):
+    def running_sequence(self):
         self.sig_runSequence.emit(deepcopy(self.data))
         self.Button_AbortSequence.setEnabled(True)
 
     @ExceptionHandling
-    def aborting_sequence(self, dummy):
+    def aborting_sequence(self):
         self.sig_abortSequence.emit()
         self.Button_AbortSequence.setEnabled(False)
 
@@ -422,10 +422,14 @@ class Sequence_builder(Window_ui, Sequence_parser):
 
     # @ExceptionHandling
     def window_FileDialogOpen(self):
-        self.sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
+        sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
                                                                        'c:\\', "Sequence files (*.seq)")
-        self.lineFileLocation.setText(self.sequence_file)
-        self.initialize_sequence(self.sequence_file)
+        if sequence_file:
+            # print(sequence_file)
+            self.init_data()
+            self.sequence_file = sequence_file
+            self.lineFileLocation.setText(self.sequence_file)
+            self.initialize_sequence(self.sequence_file)
 
     @ExceptionHandling
     def initialize_sequence(self, sequence_file):
