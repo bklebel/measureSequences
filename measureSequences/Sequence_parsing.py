@@ -121,7 +121,7 @@ class Sequence_parser(object):
         self.nesting_level = 0
         # parse sequence
         commands, textsequence = self.parse_nesting(data, -1)
-        print('read sequence: ', commands)
+        # print('read sequence: ', commands)
         return commands, textsequence
 
     def parse_nesting(self, lines_file: int, lines_index: int) -> (list, list):
@@ -454,6 +454,7 @@ class Sequence_parser(object):
         """parse a command to set a single temperature"""
         # TODO: Fast settle
         nums = self.read_nums(comm)
+        print(nums)
         dic = dict(typ='set_P',
                    position=nums[0],
                    speedindex=int(nums[2]),  # 'Reduction Factor'
