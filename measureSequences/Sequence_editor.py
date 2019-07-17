@@ -424,8 +424,10 @@ class Sequence_builder(Window_ui, Sequence_parser):
     def window_FileDialogOpen(self):
         self.sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
                                                                        'c:\\', "Sequence files (*.seq)")
-        self.lineFileLocation.setText(self.sequence_file)
-        self.initialize_sequence(self.sequence_file)
+        if self.sequence_file:
+            self.init_data()
+            self.lineFileLocation.setText(self.sequence_file)
+            self.initialize_sequence(self.sequence_file)
 
     @ExceptionHandling
     def initialize_sequence(self, sequence_file):

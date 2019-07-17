@@ -82,6 +82,7 @@ class Sequence_parser(object):
         """parse a complete file of instructions"""
         if sequence_file:
             self.change_file_location(sequence_file)
+            print('reading sequence:', sequence_file)
 
             exp = [r'TMP TEMP(.*?)$', r'FLD FIELD(.*?)$', r'SCAN(.*?)$',
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
