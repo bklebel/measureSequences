@@ -319,12 +319,12 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.sig_clearedSequence.emit()
 
     @ExceptionHandling
-    def running_sequence(self, dummy):
+    def running_sequence(self):
         self.sig_runSequence.emit(deepcopy(self.data))
         self.Button_AbortSequence.setEnabled(True)
 
     @ExceptionHandling
-    def aborting_sequence(self, dummy):
+    def aborting_sequence(self):
         self.sig_abortSequence.emit()
         self.Button_AbortSequence.setEnabled(False)
 
