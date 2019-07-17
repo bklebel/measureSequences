@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>639</width>
+    <width>557</width>
     <height>709</height>
    </rect>
   </property>
@@ -235,29 +235,23 @@
    <item row="2" column="1" colspan="6">
     <widget class="QLineEdit" name="lineFileLocation"/>
    </item>
-   <item row="5" column="0" colspan="9">
-    <widget class="QCommandLinkButton" name="Button_AbortSequence">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>ABORT Sequence</string>
-     </property>
-     <property name="description">
-      <string/>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="0" colspan="9">
-    <widget class="QCommandLinkButton" name="Button_RunSequence">
+    <widget class="QPushButton" name="Button_RunSequence">
      <property name="enabled">
       <bool>false</bool>
      </property>
      <property name="text">
       <string>RUN Sequence</string>
      </property>
-     <property name="description">
-      <string>Run the parsed sequence (unavailable without using package as extension)</string>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="9">
+    <widget class="QPushButton" name="Button_AbortSequence">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>ABORT Sequence</string>
      </property>
     </widget>
    </item>
