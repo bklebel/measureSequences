@@ -573,7 +573,7 @@ class Sequence_parser(object):
             dic['SpacingCode'] = 'ln(t)'
 
         dic['DisplayText'] = self.textnesting * self.nesting_level + \
-            'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'
+            'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'.format(**dic)
         return dic
 
     def parse_scan_P(self, comm: str) -> dict:
