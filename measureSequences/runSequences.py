@@ -79,8 +79,8 @@ class Sequence_runner(object):
             try:
                 self.executing_commands(self.sequence)
             except BreakCondition:
-                return 'Aborted!'
-        return 'Sequence finished!'
+                return 'Sequence Aborted!'
+        return 'Sequence Finished!'
 
     def executing_commands(self, commands: list) -> None:
         """execute all entries of the commands list"""
@@ -292,7 +292,7 @@ class Sequence_runner(object):
             times = mapping_tofunc(lambda x: x, 0, time, Nsteps)
 
         elif SpacingCode == 'ln(t)':
-            times = mapping_tofunc(lambda x: np.ln(x), 0, time, Nsteps)
+            times = mapping_tofunc(lambda x: np.log(x), 0, time, Nsteps)
 
         if np.isclose(time, 0):
             while self._isRunning:
