@@ -565,7 +565,7 @@ class Sequence_parser(object):
             raise AssertionError(
                 'not enough specifying numbers for time-scan!')
 
-        dic = dict(typ='scan_time', time=nums[0], Nsteps=nums[1])
+        dic = dict(typ='scan_time', time_total=nums[0], Nsteps=nums[1])
 
         if int(nums[2]) == 0:
             dic['SpacingCode'] = 'uniform'
@@ -573,7 +573,7 @@ class Sequence_parser(object):
             dic['SpacingCode'] = 'ln(t)'
 
         dic['DisplayText'] = self.textnesting * self.nesting_level + \
-            'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'
+            'Scan Time {time_total}secs in {Nsteps} steps, {SpacingCode}'
         return dic
 
     def parse_scan_P(self, comm: str) -> dict:
