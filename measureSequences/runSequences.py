@@ -309,7 +309,10 @@ class Sequence_runner(object):
                 self.executing_commands(commands)
 
                 # join timer thread
-                timer.join()
+                while timer.isAlive():
+                    self.check_running()
+                    time.sleep(0.01)
+                # timer.join()
         else:
             # Experimental!
             # commands and stuff needs to be threadsafe!
