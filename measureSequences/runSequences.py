@@ -269,7 +269,7 @@ class Sequence_runner(object):
         if done == 'Sequence finished!':
             self.subrunner = None
 
-    def execute_scan_time(self, time: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs) -> None:
+    def execute_scan_time(self, time_total: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs) -> None:
         """execute a Time scan
         The intervals t between starting to invoke all commands in the list
         are:
@@ -289,20 +289,20 @@ class Sequence_runner(object):
         """
 
         if SpacingCode == 'uniform':
-            times = mapping_tofunc(lambda x: x, 0, time, Nsteps)
+            times = mapping_tofunc(lambda x: x, 0, time_total, Nsteps)
 
         elif SpacingCode == 'ln(t)':
-            times = mapping_tofunc(lambda x: np.log(x), 0, time, Nsteps)
+            times = mapping_tofunc(lambda x: np.log(x), 0, time_total, Nsteps)
 
-        if np.isclose(time, 0):
+        if np.isclose(time_total, 0):
             while self._isRunning:
                 self.executing_commands(commands)
             self.check_running()
 
         if self.scan_time_force is False:
-            for time in times[1:]:
+            for t in times[1:]:
                 # start timer thread
-                timer = threading.Timer(time, lambda: 0)
+                timer = threading.Timer(t, lambda: 0)
                 timer.start()
 
                 # execute command
@@ -320,9 +320,9 @@ class Sequence_runner(object):
             # in one of the commands....
 
             timerlist = []
-            for time in times:
+            for t in times:
                 timerlist.append(threading.Timer(
-                    time, self.executing_commands, kwargs=dict(commands=commands)))
+                    t, self.executing_commands, kwargs=dict(commands=commands)))
                 timerlist[-1].start()
 
             while any([x.isAlive() for x in timerlist]):
