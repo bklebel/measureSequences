@@ -9,7 +9,7 @@ Author: bklebel (Benjamin Klebel)
 import time
 import threading
 import numpy as np
-import re
+# import re
 
 # for sequence commands
 import platform
@@ -20,7 +20,6 @@ except ImportError:
     pass
 
 from .Sequence_parsing import Sequence_parser
-from .Sequence_parsing import searchf_number
 from .util import ExceptionHandling
 
 import logging
@@ -118,9 +117,8 @@ class Sequence_runner(object):
             time.sleep(0.1)
             if not self._isRunning:
                 raise BreakCondition
-        else:
-            if not self._isRunning:
-                raise BreakCondition
+        if not self._isRunning:
+            raise BreakCondition
 
     @ExceptionHandling
     def stop(self) -> None:
