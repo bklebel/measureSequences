@@ -285,9 +285,15 @@ class Sequence_builder(Window_ui, Sequence_parser):
     sig_readSequence = pyqtSignal()
     sig_clearedSequence = pyqtSignal()
 
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, parent=None, display_only=False, **kwargs):
+        if display_only:
+            ui_file = pkg_resources.resource_filename(
+                __name__, "configurations\\sequence_observer.ui")
+        else:
+            ui_file = pkg_resources.resource_filename(
+                __name__, "configurations\\sequence.ui")
         super().__init__(
-            ui_file=pkg_resources.resource_filename(__name__, "configurations\\sequence.ui"), **kwargs)
+            ui_file=ui_file, **kwargs)
 
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
         self.__name__ = 'Sequence_builder'
@@ -424,7 +430,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
     # @ExceptionHandling
     def window_FileDialogOpen(self):
         sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
-                                                                       'c:\\', "Sequence files (*.seq)")
+                                                                  'c:\\', "Sequence files (*.seq)")
         if sequence_file:
             # print(sequence_file)
             self.init_data()
