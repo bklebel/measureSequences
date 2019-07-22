@@ -391,7 +391,7 @@ class Sequence_parser(object):
         This could be overwritten in case the remarks have a special structure
         which could be designed for a certain instrument/measurement"""
         return dict(typ='remark',
-                    text=comm,
+                    text=comm.strip(),
                     DisplayText=self.textnesting * self.nesting_level + comm)
 
     def parse_chamber(self, comm: str) -> dict:
