@@ -21,7 +21,9 @@ except ImportError:
 from .Sequence_parsing import Sequence_parser
 
 import logging
-logger = logging.getLogger('measureSequences').addHandler(logging.NullHandler())
+logger = logging.getLogger(
+    'measureSequences.Sequence_runner')
+logger.addHandler(logging.NullHandler())
 
 
 class BreakCondition(Exception):
