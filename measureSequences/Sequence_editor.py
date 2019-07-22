@@ -290,6 +290,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
     sig_clearedSequence = pyqtSignal()
 
     def __init__(self, parent=None, display_only=False, **kwargs):
+        self.__name__ = 'Sequence_builder'
         self.display_only = display_only
         if display_only:
             ui_file = pkg_resources.resource_filename(
@@ -301,7 +302,6 @@ class Sequence_builder(Window_ui, Sequence_parser):
             ui_file=ui_file, **kwargs)
 
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
-        self.__name__ = 'Sequence_builder'
 
         self.model = SequenceListModel()
         self.listSequence.setModel(self.model)
