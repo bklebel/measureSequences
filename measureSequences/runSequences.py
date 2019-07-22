@@ -113,6 +113,8 @@ class Sequence_runner(object):
         """
         if not self._isRunning:
             raise BreakCondition
+        while self._isPaused:
+            time.sleep(0.1)
 
     @ExceptionHandling
     def stop(self) -> None:
@@ -120,6 +122,20 @@ class Sequence_runner(object):
         self._isRunning = False
         if self.subrunner:
             self.subrunner.stop()
+
+    @ExceptionHandling
+    def pause(self) -> None:
+        """stop the sequence execution by setting self._isRunning to False"""
+        self._isPaused = True
+        if self.subrunner:
+            self.subrunner.pause()
+
+    @ExceptionHandling
+    def continue_(self) -> None:
+        """stop the sequence execution by setting self._isRunning to False"""
+        self._isPaused = False
+        if self.subrunner:
+            self.subrunner.continue_()
 
     @ExceptionHandling
     def execute_sequence_entry(self, entry: dict) -> None:
@@ -409,7 +425,7 @@ class Sequence_runner(object):
 
         self.setFieldEndMode(EndMode=EndMode)
 
-    @ExceptionHandling
+    # @ExceptionHandling
     def execute_scan_T(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, **kwargs) -> None:
         """perform a temperature scan with given parameters"""
 
