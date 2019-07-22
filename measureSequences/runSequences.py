@@ -9,6 +9,7 @@ Author: bklebel (Benjamin Klebel)
 import time
 import threading
 import numpy as np
+import re
 
 # for sequence commands
 import platform
@@ -19,6 +20,7 @@ except ImportError:
     pass
 
 from .Sequence_parsing import Sequence_parser
+from .Sequence_parsing import searchf_number
 from .util import ExceptionHandling
 
 import logging
@@ -94,6 +96,7 @@ class Sequence_runner(object):
         """execute all entries of the commands list"""
         for entry in commands:
             try:
+                logger.info(f'executing command: {entry}')
                 self.execute_sequence_entry(entry)
             except NotImplementedError as e:
                 self.message_to_user(f'An error occured: {e}. Did you maybe' +
@@ -124,6 +127,7 @@ class Sequence_runner(object):
     def stop(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
+        logger.info('Sequence was aborted')
         if self.subrunner:
             self.subrunner.stop()
 
@@ -131,6 +135,7 @@ class Sequence_runner(object):
     def pause(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isPaused = True
+        logger.info('Sequence was paused')
         if self.subrunner:
             self.subrunner.pause()
 
@@ -138,6 +143,7 @@ class Sequence_runner(object):
     def continue_(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isPaused = False
+        logger.info('Sequence was continued')
         if self.subrunner:
             self.subrunner.continue_()
 
@@ -314,7 +320,7 @@ class Sequence_runner(object):
             where 'set interval time' is the time given
                 by the scan_time functionality
 
-            and 'duration of all actions in command list' refers 
+            and 'duration of all actions in command list' refers
                 @ExceptionHandlingto
                 the time it takes to conduct everything which is defined
                 in the list of commands given
@@ -431,19 +437,23 @@ class Sequence_runner(object):
         self.setFieldEndMode(EndMode=EndMode)
 
     # @ExceptionHandling
-    def execute_scan_T(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, **kwargs) -> None:
+    def execute_scan_T(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, temperatures_forced=None, **kwargs) -> None:
         """perform a temperature scan with given parameters"""
 
-        # building the individual temperatures to scan through
-        if SpacingCode == 'uniform':
-            temperatures = mapping_tofunc(lambda x: x, start, end, Nsteps)
+        if temperatures_forced:
+            temperatures = temperatures_forced
+        else:
+            # building the individual temperatures to scan through
+            if SpacingCode == 'uniform':
+                temperatures = mapping_tofunc(lambda x: x, start, end, Nsteps)
 
-        elif SpacingCode == '1/T':
-            temperatures = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
+            elif SpacingCode == '1/T':
+                temperatures = mapping_tofunc(
+                    lambda x: 1 / x, start, end, Nsteps)
 
-        elif SpacingCode == 'logT':
-            temperatures = mapping_tofunc(
-                lambda x: np.log(x), start, end, Nsteps)
+            elif SpacingCode == 'logT':
+                temperatures = mapping_tofunc(
+                    lambda x: np.log(x), start, end, Nsteps)
 
         # scanning through the temperatures:
 
