@@ -20,6 +20,9 @@ except ImportError:
 
 from .Sequence_parsing import Sequence_parser
 
+import logging
+logger = logging.getLogger('measureSequences.Sequence_runner').addHandler(logging.NullHandler())
+
 
 class BreakCondition(Exception):
     """docstring for BreakCondition"""
