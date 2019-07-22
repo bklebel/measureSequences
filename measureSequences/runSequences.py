@@ -60,9 +60,10 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> 'type(np.arra
 class Sequence_runner(object):
     """docstring for Sequence_Thread"""
 
-    def __init__(self, sequence: list, lock=None, isRunning=None, thresholds_waiting: dict = None, **kwargs) -> None:
+    def __init__(self, sequence: list, lock=None, isRunning=None, isPaused=None, thresholds_waiting: dict = None, **kwargs) -> None:
         super().__init__(**kwargs)
         self._isRunning = True if isRunning is None else isRunning
+        self._isPaused = False if isPaused is None else isPaused
         self.sequence = sequence
         self.lock = threading.Lock() if lock is None else lock
         if thresholds_waiting is None:
@@ -111,10 +112,13 @@ class Sequence_runner(object):
         """check for the _isRunning flag, raise Exception if
         the Sequence_runner was stopped
         """
-        if not self._isRunning:
-            raise BreakCondition
         while self._isPaused:
             time.sleep(0.1)
+            if not self._isRunning:
+                raise BreakCondition
+        else:
+            if not self._isRunning:
+                raise BreakCondition
 
     @ExceptionHandling
     def stop(self) -> None:
@@ -290,6 +294,7 @@ class Sequence_runner(object):
 
         self.subrunner = self.__class__(sequence=commands,
                                         isRunning=self._isRunning,
+                                        isPaused=self._isPaused,
                                         thresholds_waiting=self.thresholds_waiting,
                                         lock=threading.Lock())
 
@@ -446,7 +451,7 @@ class Sequence_runner(object):
         if ApproachMode == "No O\'Shoot":
             for ct, temp in enumerate(temperatures):
                 approachTemps = mapping_tofunc(lambda x: np.log(
-                    x), start=first, end=temp, Nsteps=10)
+                    x), start=temperatures[0], end=temp, Nsteps=10)
                 for t in approachTemps:
                     self.setTemperature(t)
                     # self._setpoint_temp = t
