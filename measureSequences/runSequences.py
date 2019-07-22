@@ -96,7 +96,6 @@ class Sequence_runner(object):
         """execute all entries of the commands list"""
         for entry in commands:
             try:
-                logger.info(f'executing command: {entry}')
                 self.execute_sequence_entry(entry)
             except NotImplementedError as e:
                 self.message_to_user(f'An error occured: {e}. Did you maybe' +
@@ -151,6 +150,7 @@ class Sequence_runner(object):
     def execute_sequence_entry(self, entry: dict) -> None:
         """execute the one entry of a list of commands"""
         self.check_running()
+        logger.info(f'executing command: {entry}')
 
         if entry['typ'] == 'Shutdown':
             self.Shutdown()
