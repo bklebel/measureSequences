@@ -19,7 +19,7 @@ import os
 import re
 import json
 import logging
-logger = logging.getLogger('measureSequences.Sequence_parser').addHandler(logging.NullHandler())
+logger = logging.getLogger('measureSequences').addHandler(logging.NullHandler())
 
 
 dropstring = re.compile(r'([a-zA-Z0-9])')

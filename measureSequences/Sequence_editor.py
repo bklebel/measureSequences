@@ -34,7 +34,7 @@ from .qlistmodel import ScanListModel
 import pkg_resources
 import logging
 logger = logging.getLogger(
-    'measureSequences.Sequence_builder').addHandler(logging.NullHandler())
+    'measureSequences').addHandler(logging.NullHandler())
 
 
 class Window_ChangeDataFile(QtWidgets.QDialog):

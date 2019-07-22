@@ -33,7 +33,7 @@ import functools
 import logging
 
 logger = logging.getLogger(
-    'measureSequences.utility').addHandler(logging.NullHandler())
+    'measureSequences').addHandler(logging.NullHandler())
 
 
 def ExceptionSignal(thread, func, e_type, err):
