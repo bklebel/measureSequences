@@ -15,12 +15,14 @@ Author: bklebel (Benjamin Klebel)
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QTimer
 from PyQt5.uic import loadUi
 
 from copy import deepcopy
 import sys
 import threading
+from os import path
 
 from .util import Window_ui
 from .util import ExceptionHandling
@@ -30,6 +32,10 @@ from .qlistmodel import SequenceListModel
 from .qlistmodel import ScanListModel
 
 import pkg_resources
+import logging
+logger = logging.getLogger(
+    'measureSequences.Sequence_builder')
+logger.addHandler(logging.NullHandler())
 
 
 class Window_ChangeDataFile(QtWidgets.QDialog):
@@ -284,34 +290,38 @@ class Sequence_builder(Window_ui, Sequence_parser):
     sig_readSequence = pyqtSignal()
     sig_clearedSequence = pyqtSignal()
 
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, parent=None, display_only=False, **kwargs):
+        self.__name__ = 'Sequence_builder'
+        self.display_only = display_only
+        if display_only:
+            ui_file = pkg_resources.resource_filename(
+                __name__, "configurations\\sequence_observer.ui")
+        else:
+            ui_file = pkg_resources.resource_filename(
+                __name__, "configurations\\sequence.ui")
         super().__init__(
-            ui_file=pkg_resources.resource_filename(__name__, "configurations\\sequence.ui"), **kwargs)
+            ui_file=ui_file, **kwargs)
 
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
-        self.__name__ = 'Sequence_builder'
 
-        QTimer.singleShot(0, self.initialize_all_windows)
-        # QTimer.singleShot(
-        # 0, lambda: self.initialize_sequence(self.sequence_file))
-
-        # self.sequence_file = sequence_file
-        # self.textnesting = textnesting
         self.model = SequenceListModel()
         self.listSequence.setModel(self.model)
 
-        self.treeOptions.itemDoubleClicked[
-            'QTreeWidgetItem*', 'int'].connect(lambda value: self.addItem_toSequence(value))
-        self.pushSaving.clicked.connect(self.saving)
-        self.pushBrowse.clicked.connect(self.window_FileDialogSave)
-        self.pushOpen.clicked.connect(self.window_FileDialogOpen)
-        self.lineFileLocation.setText(self.sequence_file)
-        self.lineFileLocation.textChanged.connect(
-            lambda value: self.change_file_location(value))
-        self.pushClear.clicked.connect(self.init_data)
+        if not display_only:
+            QTimer.singleShot(0, self.initialize_all_windows)
 
-        self.Button_RunSequence.clicked.connect(self.running_sequence)
-        self.Button_AbortSequence.clicked.connect(self.aborting_sequence)
+            self.treeOptions.itemDoubleClicked[
+                'QTreeWidgetItem*', 'int'].connect(lambda value: self.addItem_toSequence(value))
+            self.pushSaving.clicked.connect(self.saving)
+            self.pushBrowse.clicked.connect(self.window_FileDialogSave)
+            self.pushOpen.clicked.connect(self.window_FileDialogOpen)
+            self.lineFileLocation.setText(self.sequence_file)
+            self.lineFileLocation.textChanged.connect(
+                lambda value: self.change_file_location(value))
+            self.pushClear.clicked.connect(self.init_data)
+
+            self.Button_RunSequence.clicked.connect(self.running_sequence)
+            self.Button_AbortSequence.clicked.connect(self.aborting_sequence)
 
     def init_data(self):
         self.model.clear_all()
@@ -319,14 +329,18 @@ class Sequence_builder(Window_ui, Sequence_parser):
         self.sig_clearedSequence.emit()
 
     @ExceptionHandling
+    @pyqtSlot()
     def running_sequence(self):
         self.sig_runSequence.emit(deepcopy(self.data))
-        self.Button_AbortSequence.setEnabled(True)
+        if not self.display_only:
+            self.Button_AbortSequence.setEnabled(True)
 
     @ExceptionHandling
+    @pyqtSlot()
     def aborting_sequence(self):
         self.sig_abortSequence.emit()
-        self.Button_AbortSequence.setEnabled(False)
+        if not self.display_only:
+            self.Button_AbortSequence.setEnabled(False)
 
     # @ExceptionHandling
     # def addItem_toSequence(self, text):
@@ -413,27 +427,33 @@ class Sequence_builder(Window_ui, Sequence_parser):
             lambda value: self.addChangeDataFile(value))
 
     # @ExceptionHandling
+    @pyqtSlot()
     def window_FileDialogSave(self):
         self.sequence_file_json, __ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As',
                                                                             'c:\\', "Serialised (*.json)")
         # last option is a file specifier, like 'Sequence Files (*.seq)'
-        self.lineFileLocation_serialised.setText(self.sequence_file_json)
+        if not self.display_only:
+            self.lineFileLocation_serialised.setText(self.sequence_file_json)
         self.sequence_file_p = self.sequence_file_json[:-4] + 'pkl'
 
     # @ExceptionHandling
+    @pyqtSlot()
     def window_FileDialogOpen(self):
         sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
-                                                                       'c:\\', "Sequence files (*.seq)")
+                                                                  'c:\\', "Sequence files (*.seq)")
         if sequence_file:
             # print(sequence_file)
             self.init_data()
             self.sequence_file = sequence_file
-            self.lineFileLocation.setText(self.sequence_file)
+            if not self.display_only:
+                self.lineFileLocation.setText(self.sequence_file)
             self.initialize_sequence(self.sequence_file)
+            self.setWindowTitle(path.basename(self.sequence_file))
 
     @ExceptionHandling
     def initialize_sequence(self, sequence_file):
         """build & run the sequence parsing, add items to the display model"""
+        logger.debug('initialising/parsing sequence: {}'.format(sequence_file))
         super().initialize_sequence(sequence_file)
         for command in self.textsequence:
             self.model.addItem(command)

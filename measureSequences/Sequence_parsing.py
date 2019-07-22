@@ -18,6 +18,10 @@ import pickle
 import os
 import re
 import json
+import logging
+logger = logging.getLogger(
+    'measureSequences.Sequence_parser')
+logger.addHandler(logging.NullHandler())
 
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
@@ -387,7 +391,7 @@ class Sequence_parser(object):
         This could be overwritten in case the remarks have a special structure
         which could be designed for a certain instrument/measurement"""
         return dict(typ='remark',
-                    text=comm,
+                    text=comm.strip(),
                     DisplayText=self.textnesting * self.nesting_level + comm)
 
     def parse_chamber(self, comm: str) -> dict:
@@ -565,7 +569,7 @@ class Sequence_parser(object):
             raise AssertionError(
                 'not enough specifying numbers for time-scan!')
 
-        dic = dict(typ='scan_time', time=nums[0], Nsteps=nums[1])
+        dic = dict(typ='scan_time', time_total=nums[0], Nsteps=nums[1])
 
         if int(nums[2]) == 0:
             dic['SpacingCode'] = 'uniform'
@@ -573,7 +577,7 @@ class Sequence_parser(object):
             dic['SpacingCode'] = 'ln(t)'
 
         dic['DisplayText'] = self.textnesting * self.nesting_level + \
-            'Scan Time {time}secs in {Nsteps} steps, {SpacingCode}'.format(**dic)
+            'Scan Time {time_total}secs in {Nsteps} steps, {SpacingCode}'.format(**dic)
         return dic
 
     def parse_scan_P(self, comm: str) -> dict:

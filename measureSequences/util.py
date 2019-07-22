@@ -29,49 +29,66 @@ from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 
 import functools
-import inspect
+# import inspect
+import logging
+
+logger = logging.getLogger(
+    'measureSequences.utility')
+logger.addHandler(logging.NullHandler())
 
 
 def ExceptionSignal(thread, func, e_type, err):
     """Emit assertion-signal with relevant information"""
-    thread.sig_assertion.emit('{}: {}: {}: {}'.format(
+    string = '{}: {}: {}: {}'.format(
         thread.__name__,
         func.__name__,
         e_type,
-        err.args[0]))
+        err.args[0])
+
+    thread.sig_assertion.emit(string)
+    return string
 
 
 def ExceptionHandling(func):
+
     @functools.wraps(func)
     def wrapper_ExceptionHandling(*args, **kwargs):
-        if inspect.isclass(type(args[0])):
-            try:
-                return func(*args, **kwargs)
-            except AssertionError as e_ass:
-                ExceptionSignal(args[0], func, 'Assertion', e_ass)
+        try:
+            return func(*args, **kwargs)
+        except AssertionError as e:
+            s = ExceptionSignal(args[0], func, 'Assertion', e)
+            # thread.logger.exception(s)
+            logger.exception(s)
 
-            except TypeError as e_type:
-                ExceptionSignal(args[0], func, 'Type', e_type)
+        except TypeError as e:
+            s = ExceptionSignal(args[0], func, 'Type', e)
+            # thread.logger.exception(s)
+            logger.exception(s)
 
-            except KeyError as e_key:
-                ExceptionSignal(args[0], func, 'Key', e_key)
+        except KeyError as e:
+            s = ExceptionSignal(args[0], func, 'Key', e)
+            # thread.logger.exception(s)
+            logger.exception(s)
 
-            except ValueError as e_val:
-                ExceptionSignal(args[0], func, 'Value', e_val)
+        except ValueError as e:
+            s = ExceptionSignal(args[0], func, 'Value', e)
+            # thread.logger.exception(s)
+            logger.exception(s)
 
-            except AttributeError as e_attr:
-                ExceptionSignal(args[0], func, 'Attribute', e_attr)
+        except AttributeError as e:
+            s = ExceptionSignal(args[0], func, 'Attribute', e)
+            # thread.logger.exception(s)
+            logger.exception(s)
 
-            except NotImplementedError as e_implement:
-                ExceptionSignal(args[0], func, 'NotImplemented', e_implement)
+        except NotImplementedError as e:
+            # thread.logger.exception(s)
+            logger.exception(s)
+            e.args = [str(e)]
+            ExceptionSignal(args[0], func, 'NotImplemented', e)
 
-            except OSError as e:
-                ExceptionSignal(args[0], func, 'OSError', e)
-
-            except IndexError as e:
-                ExceptionSignal(args[0], func, 'IndexError', e)
-        else:
-            print('There is a bug!! ' + func.__name__)
+        except OSError as e:
+            s = ExceptionSignal(args[0], func, 'OSError', e)
+            logger.exception(e)
     return wrapper_ExceptionHandling
 
 
