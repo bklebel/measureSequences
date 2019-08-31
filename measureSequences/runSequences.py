@@ -10,6 +10,7 @@ import time
 import threading
 import numpy as np
 # import re
+from tokenize import detect_encoding
 
 # for sequence commands
 import platform
@@ -162,6 +163,8 @@ class Sequence_runner(object):
             self.execute_remark(entry['text'])
         if entry['typ'] == 'sequence_message':
             self.execute_sequence_message(**entry)
+        if entry['typ'] == 'exec python':
+            self.execute_python(**entry)
 
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)
@@ -307,6 +310,33 @@ class Sequence_runner(object):
             raise BreakCondition
         if done == 'Sequence finished!':
             self.subrunner = None
+
+    @ExceptionHandling
+    def execute_python(self, file: str, **kwargs) -> None:
+        """execute python code directly, changable during runtime
+
+        DANGEROUS!
+
+        Has the potential that whatsoever-code is inserted. In principle,
+        after all, that is exactly its purpose. Be careful with it, it might
+        give unpleasant surprises....
+
+        using globals() and locals(), the python script is in the Namespace of
+        'right here', in this function.
+        checks file for encoding"""
+        with open(file, 'rb') as fe:
+            try:
+                enc = detect_encoding(fe.readline)[0]
+            except SyntaxError:
+                enc = 'utf-8'
+
+        with open(file, 'r', encoding=enc) as f:
+            fc = f.read()
+        if not fc.endswith('\n'):
+            fc += '\n'
+        code = compile(fc, file, 'exec')
+        exec(code, globals(), locals())
+
 
     @ExceptionHandling
     def execute_scan_time(self, time_total: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs) -> None:
