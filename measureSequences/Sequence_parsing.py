@@ -102,7 +102,8 @@ class Sequence_parser(object):
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
                    r'LPI(.*?)$', r'SHT(.*?)DOWN', r'EN(.*?)EOS$', r'RES(.*?)$',
                    r'BEP BEEP(.*?)$', r'CMB CHAMBER(.*?)$', r'REM(.*?)$',
-                   r'MVP MOVE(.*?)$', r'MES(.*?)$']
+                   r'MVP MOVE(.*?)$', r'MES(.*?)$', r'PHY(.*?)$',
+                   ]
             self.p = re.compile(self.construct_pattern(
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
 
@@ -164,7 +165,7 @@ class Sequence_parser(object):
                 try:
                     text_list.append(dict(DisplayText=c['DisplayText']))
                 except KeyError:
-                    print(c)
+                    logger.warning(f'Building Text list: missing DisplayText parameter in {dic}!')
                 self.add_text(text_list, c)
 
     def parse_line(self, lines_file: int, line: str, line_index: int) -> dict:
@@ -240,6 +241,10 @@ class Sequence_parser(object):
         elif line_found[15]:
             # sequence message
             dic = self.parse_sequence_message(line)
+
+        elif line_found[16]:
+            # python exec file
+            dic = self.parse_python_exec(line)
 
         # try:
         #     print(dic)
@@ -489,7 +494,13 @@ class Sequence_parser(object):
         file = comm[4:]
         return dict(typ='chain sequence', new_file_seq=file,
                     DisplayText=self.textnesting * self.nesting_level + 'Chain sequence: {}'.format(comm))
-        # return dic
+
+    def parse_python_exec(self, comm: str) -> dict:
+        """parse command to execute python script file -- EXTERNAL !"""
+        file = comm[4:].strip().strip(""" '" """)
+        return dict(typ='exec python', file=file,
+                    DisplayText=self.textnesting * self.nesting_level +
+                    'Execute python script: {}'.format(file))
 
     def parse_scan_T(self, comm: str) -> dict:
         """parse a command to do a temperature scan"""
@@ -564,6 +575,8 @@ class Sequence_parser(object):
         return dic
 
     def parse_scan_time(self, comm: str) -> dict:
+        '''parse command to do a time scan
+        (execute commands in scan in certain time intervals)'''
         nums = self.read_nums(comm)
         if len(nums) < 3:
             raise AssertionError(
@@ -581,6 +594,7 @@ class Sequence_parser(object):
         return dic
 
     def parse_scan_P(self, comm: str) -> dict:
+        '''parse command to scan through positions'''
         nums = self.read_nums(comm)
         if len(nums) < 4:
             raise AssertionError(
@@ -625,8 +639,6 @@ class Sequence_parser(object):
                     # a - appending, w - writing, can be inserted
                     # directly into opening statement
                     DisplayText=self.textnesting * self.nesting_level + 'Change data file: {}'.format(file))
-        # print('CDF', comm, dic)
-        # return dic
 
     def parse_res_datafilecomment(self, comm: str) -> dict:
         """parse a command to write a comment to the datafile"""
