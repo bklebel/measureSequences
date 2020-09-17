@@ -73,7 +73,7 @@ class Sequence_parser(object):
         self.textnesting = textnesting
         self.initialize_sequence(self.sequence_file)
 
-    def saving(self)-> None:
+    def saving(self) -> None:
         """save serialised versions of a sequence"""
         with open(self.sequence_file_p, 'wb') as output:
             pickle.dump(self.data, output, pickle.HIGHEST_PROTOCOL)
