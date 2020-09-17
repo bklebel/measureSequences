@@ -14,9 +14,6 @@ from .Sequence_parsing import Sequence_parser
 class Dummy_Functions():
     """docstring for Functions"""
 
-    def __init__(self):
-        super().__init__()
-
     def setTemperature(self, temperature: float) -> None:
         """
             Method to be overridden/injected by a child class
