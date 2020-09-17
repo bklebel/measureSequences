@@ -163,8 +163,10 @@ class Sequence_runner(object):
             self.execute_remark(entry['text'])
         if entry['typ'] == 'sequence_message':
             self.execute_sequence_message(**entry)
-        if entry['typ'] == 'exec python':
+        if entry['typ'] == 'exec python multiple':
             self.execute_python(**entry)
+        if entry['typ'] == 'exec python':
+            self.execute_python_single(**entry)            
 
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)
@@ -338,9 +340,9 @@ class Sequence_runner(object):
         exec(code, globals(), locals())
 
     @ExceptionHandling
-    def execute_python(self, files: list, **kwargs) -> None:
-        for file in files:
-            self.execute_python_single(file=file)
+    def execute_python(self, commands: list, **kwargs) -> None:
+        for c in commands:
+            self.executing_commands(commands)
 
 
     @ExceptionHandling

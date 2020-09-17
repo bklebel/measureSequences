@@ -393,8 +393,8 @@ class Sequence_parser(object):
     def parse_python_exec(self, file: str) -> dict:
         """parse command to execute python script file -- EXTERNAL !"""
         return dict(typ='exec python', file=file,
-                    DisplayText=self.textnesting * self.nesting_level +
-                    'Execute python script: {}'.format(file))
+                    DisplayText=self.textnesting * (self.nesting_level + 1) +
+                    'Exec: {}'.format(file))
 
     def parse_remark(self, comm: str) -> dict:
         """parse a remark
@@ -404,13 +404,16 @@ class Sequence_parser(object):
         text = comm.strip()
         if text.startswith('python'):
             files = parse_strings(comm)
-
-
+            return = dict(typ='exec python multiple',
+                          DisplayText=self.textnesting * self.nesting_level +
+                          'Execute python scripts:',
+                          commands=[self.parse_python_exec(f) for f in files])
 
         else:
             return dict(typ='remark',
                         text=comm.strip(),
                         DisplayText=self.textnesting * self.nesting_level + comm)
+
     def parse_chamber(self, comm: str) -> dict:
         '''parse a command for a chamber operation'''
         nums = self.read_nums(comm)
@@ -595,7 +598,8 @@ class Sequence_parser(object):
             dic['SpacingCode'] = 'ln(t)'
 
         dic['DisplayText'] = self.textnesting * self.nesting_level + \
-            'Scan Time {time_total}secs in {Nsteps} steps, {SpacingCode}'.format(**dic)
+            'Scan Time {time_total}secs in {Nsteps} steps, {SpacingCode}'.format(
+                **dic)
         return dic
 
     def parse_scan_P(self, comm: str) -> dict:
