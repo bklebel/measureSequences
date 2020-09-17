@@ -39,56 +39,69 @@ logger.addHandler(logging.NullHandler())
 
 def ExceptionSignal(thread, func, e_type, err):
     """Emit assertion-signal with relevant information"""
-    string = '{}: {}: {}: {}'.format(
-        thread.__name__,
-        func.__name__,
-        e_type,
-        err.args[0])
-
-    thread.sig_assertion.emit(string)
+    string = "{}: {}: {}: {} :: {}".format(
+        thread.__name__, func.__name__, e_type, err.args[0], err.__traceback__
+    )
     return string
 
 
 def ExceptionHandling(func):
-
     @functools.wraps(func)
     def wrapper_ExceptionHandling(*args, **kwargs):
+        # if inspect.isclass(type(args[0])):
+        # thread = args[0]
         try:
             return func(*args, **kwargs)
         except AssertionError as e:
-            s = ExceptionSignal(args[0], func, 'Assertion', e)
+            s = ExceptionSignal(args[0], func, "Assertion", e)
             # thread.logger.exception(s)
-            logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
 
         except TypeError as e:
-            s = ExceptionSignal(args[0], func, 'Type', e)
+            s = ExceptionSignal(args[0], func, "Type", e)
             # thread.logger.exception(s)
-            logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
 
         except KeyError as e:
-            s = ExceptionSignal(args[0], func, 'Key', e)
+            s = ExceptionSignal(args[0], func, "Key", e)
             # thread.logger.exception(s)
-            logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
+
+        except IndexError as e:
+            s = ExceptionSignal(args[0], func, "Index", e)
+            # thread.logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
 
         except ValueError as e:
-            s = ExceptionSignal(args[0], func, 'Value', e)
+            s = ExceptionSignal(args[0], func, "Value", e)
             # thread.logger.exception(s)
-            logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
 
         except AttributeError as e:
-            s = ExceptionSignal(args[0], func, 'Attribute', e)
+            s = ExceptionSignal(args[0], func, "Attribute", e)
             # thread.logger.exception(s)
-            logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
 
         except NotImplementedError as e:
+            s = ExceptionSignal(args[0], func, "NotImplemented", e)
             # thread.logger.exception(s)
-            logger.exception(s)
-            e.args = [str(e)]
-            ExceptionSignal(args[0], func, 'NotImplemented', e)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
+            # e.args = [str(e)]
 
         except OSError as e:
-            s = ExceptionSignal(args[0], func, 'OSError', e)
-            logger.exception(e)
+            s = ExceptionSignal(args[0], func, "OSError", e)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
+        # else:
+        #     args[0]._logger.warning('There is a bug!! ' + func.__name__)
+
     return wrapper_ExceptionHandling
 
 

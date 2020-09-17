@@ -64,6 +64,9 @@ class Sequence_runner(object):
 
     def __init__(self, sequence: list, lock=None, isRunning=None, isPaused=None, thresholds_waiting: dict = None, **kwargs) -> None:
         super().__init__(**kwargs)
+        self._logger = logging.getLogger(
+            "measureSequences." + __name__ + "." + self.__class__.__name__
+        )
         self._isRunning = True if isRunning is None else isRunning
         self._isPaused = False if isPaused is None else isPaused
         self.sequence = sequence
@@ -166,7 +169,7 @@ class Sequence_runner(object):
         if entry['typ'] == 'exec python multiple':
             self.execute_python(**entry)
         if entry['typ'] == 'exec python':
-            self.execute_python_single(**entry)            
+            self.execute_python_single(**entry)
 
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)

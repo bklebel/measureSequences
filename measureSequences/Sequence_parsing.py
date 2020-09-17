@@ -73,6 +73,9 @@ class Sequence_parser(object):
     def __init__(self, sequence_file: str = None, textnesting: str = '   ', **kwargs):
         """initialise important attributes"""
         super(Sequence_parser, self).__init__(**kwargs)
+        self._logger = logging.getLogger(
+            "measureSequences." + __name__ + "." + self.__class__.__name__
+        )
 
         self.sequence_file = sequence_file
         self.textnesting = textnesting

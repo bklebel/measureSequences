@@ -6,6 +6,7 @@ from copy import deepcopy
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore
 # import math
+import logging
 
 from .util import ScanningN
 # needed for the stepsize
@@ -19,6 +20,9 @@ class SequenceListModel(QtCore.QAbstractListModel):
     def __init__(self, sequence=None, parent=None):
         QtCore.QAbstractListModel.__init__(self, parent)
         self.__sequence = [] if sequence is None else sequence
+        self._logger = logging.getLogger(
+            "measureSequences." + __name__ + "." + self.__class__.__name__
+        )
 
         # self.countinserted = 0
         # self.root = Node(dict(DisplayText='specialnode', arbdata='weha'))
@@ -172,6 +176,9 @@ class ScanListModel(QtCore.QAbstractListModel):
 
     def __init__(self, signalreceiver, start=None, end=None, Nsteps=None, SizeSteps=None, **kwargs):
         super().__init__(**kwargs)
+        self._logger = logging.getLogger(
+            "measureSequences." + __name__ + "." + self.__class__.__name__
+        )
 
         self.signalreceiver = signalreceiver
         self.__sequence = []
