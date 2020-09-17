@@ -54,7 +54,7 @@ def parse_binary(number: int) -> list:
 def parse_strings(string):
     """parse all strings in one line"""
     a = [[y for y in x if y] for x in searchf_string.findall(string)]
-    for ct, x in enumerate(a):
+    for ct, _ in enumerate(a):
         try:
             a[ct] = a[ct][0]
         except IndexError:
@@ -137,7 +137,7 @@ class Sequence_parser(object):
             if self.jumping_count[self.nesting_level + 1] > 0:
                 self.jumping_count[self.nesting_level + 1] -= 1
                 continue
-            for count, jump in enumerate(self.jumping_count[:-1]):
+            for count, _unused_jump in enumerate(self.jumping_count[:-1]):
                 self.jumping_count[count] += 1
             try:
 

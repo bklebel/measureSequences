@@ -487,7 +487,7 @@ class Sequence_runner(object):
 
         # approaching very slowly:
         if ApproachMode == "No O\'Shoot":
-            for ct, temp in enumerate(temperatures):
+            for _, temp in enumerate(temperatures):
                 approachTemps = mapping_tofunc(lambda x: np.log(
                     x), start=temperatures[0], end=temp, Nsteps=10)
                 for t in approachTemps:
@@ -617,7 +617,7 @@ class Sequence_runner(object):
         reading_count = int(reading_count)
         # print(reading_count)
 
-        for ct in range(reading_count):
+        for _ in range(reading_count):
             values_measured.append(self.res_measure(
                 dataflags=dataflags, bridge_conf=bridge_conf))
 

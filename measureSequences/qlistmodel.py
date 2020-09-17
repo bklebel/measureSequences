@@ -34,8 +34,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return "Sequence"
-            else:
-                return '{}'.format(section + 1)
+            return '{}'.format(section + 1)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self.__sequence)
