@@ -1,6 +1,10 @@
 # measureSequences
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ba794e9427f0457696a2861f39e04786)](https://app.codacy.com/app/bklebel/measureSequences?utm_source=github.com&utm_medium=referral&utm_content=bklebel/measureSequences&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ba794e9427f0457696a2861f39e04786)](https://app.codacy.com/app/bklebel/measureSequences?utm_source=github.com&utm_medium=referral&utm_content=bklebel/measureSequences&utm_campaign=Badge_Grade_Dashboard) 
+
+[![DeepSource](https://deepsource.io/gh/bklebel/measureSequences.svg/?label=active issues&show_trend=true&)](https://deepsource.io/gh/bklebel/measureSequences/?ref=repository-badge) 
+
+[![DeepSource](https://deepsource.io/gh/bklebel/measureSequences.svg/?label=resolved issues&show_trend=true&)](https://deepsource.io/gh/bklebel/measureSequences/?ref=repository-badge)
 
 Tools for an abstract sequence editor, parser and runner
 
