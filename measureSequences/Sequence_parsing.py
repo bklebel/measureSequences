@@ -102,7 +102,7 @@ class Sequence_parser(object):
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
                    r'LPI(.*?)$', r'SHT(.*?)DOWN', r'EN(.*?)EOS$', r'RES(.*?)$',
                    r'BEP BEEP(.*?)$', r'CMB CHAMBER(.*?)$', r'REM(.*?)$',
-                   r'MVP MOVE(.*?)$', r'MES(.*?)$', r'PHY(.*?)$',
+                   r'MVP MOVE(.*?)$', r'MES(.*?)$',
                    ]
             self.p = re.compile(self.construct_pattern(
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
@@ -390,15 +390,27 @@ class Sequence_parser(object):
         """generate the displaytext for the sequence message"""
         return 'SeqMes {timeout_waiting_min}min, {message_type}, {message_direct}, Email To {email_receiver}, {email_cc}, {email_subject}, {email_message}, attachements: {email_attachement_path}'.format(**data)
 
+    def parse_python_exec(self, file: str) -> dict:
+        """parse command to execute python script file -- EXTERNAL !"""
+        return dict(typ='exec python', file=file,
+                    DisplayText=self.textnesting * self.nesting_level +
+                    'Execute python script: {}'.format(file))
+
     def parse_remark(self, comm: str) -> dict:
         """parse a remark
 
         This could be overwritten in case the remarks have a special structure
         which could be designed for a certain instrument/measurement"""
-        return dict(typ='remark',
-                    text=comm.strip(),
-                    DisplayText=self.textnesting * self.nesting_level + comm)
+        text = comm.strip()
+        if text.startswith('python'):
+            files = parse_strings(comm)
 
+
+
+        else:
+            return dict(typ='remark',
+                        text=comm.strip(),
+                        DisplayText=self.textnesting * self.nesting_level + comm)
     def parse_chamber(self, comm: str) -> dict:
         '''parse a command for a chamber operation'''
         nums = self.read_nums(comm)
@@ -494,13 +506,6 @@ class Sequence_parser(object):
         file = comm[4:]
         return dict(typ='chain sequence', new_file_seq=file,
                     DisplayText=self.textnesting * self.nesting_level + 'Chain sequence: {}'.format(comm))
-
-    def parse_python_exec(self, comm: str) -> dict:
-        """parse command to execute python script file -- EXTERNAL !"""
-        file = comm[4:].strip().strip(""" '" """)
-        return dict(typ='exec python', file=file,
-                    DisplayText=self.textnesting * self.nesting_level +
-                    'Execute python script: {}'.format(file))
 
     def parse_scan_T(self, comm: str) -> dict:
         """parse a command to do a temperature scan"""

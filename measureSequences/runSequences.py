@@ -312,7 +312,7 @@ class Sequence_runner(object):
             self.subrunner = None
 
     @ExceptionHandling
-    def execute_python(self, file: str, **kwargs) -> None:
+    def execute_python_single(self, file: str, **kwargs) -> None:
         """execute python code directly, changable during runtime
 
         DANGEROUS!
@@ -336,6 +336,11 @@ class Sequence_runner(object):
             fc += '\n'
         code = compile(fc, file, 'exec')
         exec(code, globals(), locals())
+
+    @ExceptionHandling
+    def execute_python(self, files: list, **kwargs) -> None:
+        for file in files:
+            self.execute_python_single(file=file)
 
 
     @ExceptionHandling
