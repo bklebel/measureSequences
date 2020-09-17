@@ -218,42 +218,42 @@ class Dummy(Sequence_runner, Dummy_Functions):
 
     def Shutdown(self):
         """Shut down instruments to a safe standby-configuration"""
-        print(f'Shutdown :: going into safe shutdown mode')
+        print('Shutdown :: going into safe shutdown mode')
 
     def chamber_purge(self):
         """purge the chamber
 
         must block until the chamber is purged
         """
-        print(f'chamber_purge :: purging chamber')
+        print('chamber_purge :: purging chamber')
 
     def chamber_vent(self):
         """vent the chamber
 
         must block until the chamber is vented
         """
-        print(f'chamber_vent :: venting chamber')
+        print('chamber_vent :: venting chamber')
 
     def chamber_seal(self):
         """seal the chamber
 
         must block until the chamber is sealed
         """
-        print(f'chamber_seal :: sealing chamber')
+        print('chamber_seal :: sealing chamber')
 
     def chamber_continuous(self, action):
         """pump or vent the chamber continuously"""
         if action == 'pumping':
-            print(f'chamber_continuous :: pumping continuously')
+            print('chamber_continuous :: pumping continuously')
         if action == 'venting':
-            print(f'chamber_continuous :: venting continuously')
+            print('chamber_continuous :: venting continuously')
 
     def chamber_high_vacuum(self):
         """pump the chamber to high vacuum
 
         must block until the chamber is  at high vacuum
         """
-        print(f'chamber_high_vacuum :: bringing the chamber to HV')
+        print('chamber_high_vacuum :: bringing the chamber to HV')
 
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
         """Measure resistivity
