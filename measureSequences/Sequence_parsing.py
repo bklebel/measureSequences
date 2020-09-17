@@ -48,7 +48,7 @@ def parse_binary(number: int) -> list:
     nums = list(reversed('{:b}'.format(number)))
     # print(nums)
     for ct, num in enumerate(nums):
-        nums[ct] = True if int(num) else False
+        nums[ct] = bool(int(num))
     return nums
 
 
@@ -417,10 +417,9 @@ class Sequence_parser(object):
                         'Execute python scripts:',
                         commands=[self.parse_python_exec(f) for f in files])
 
-        else:
-            return dict(typ='remark',
-                        text=comm.strip(),
-                        DisplayText=self.textnesting * self.nesting_level + comm)
+        return dict(typ='remark',
+                    text=comm.strip(),
+                    DisplayText=self.textnesting * self.nesting_level + comm)
 
     def parse_chamber(self, comm: str) -> dict:
         '''parse a command for a chamber operation'''
@@ -681,7 +680,7 @@ class Sequence_parser(object):
             bridge_conf[ct] = dict(limit_power_uW=channel[2],
                                    limit_current_uA=channel[1],
                                    limit_voltage_mV=channel[5])
-            bridge_conf[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_conf[ct]['on_off'] = bool(channel[0] == 2)
             bridge_conf[ct]['ac_dc'] = 'AC' if channel[3] == 0 else 'DC'
             bridge_conf[ct]['calibration_mode'] = 'Standard' if channel[
                 4] == 0 else 'Fast'
@@ -766,7 +765,7 @@ class Sequence_parser(object):
             bridge_setup[ct] = dict(limit_power_uW=channel[1],
                                     limit_voltage_mV=channel[4])
             bridge_setup[ct]['ac_dc'] = 'AC' if channel[2] == 0 else 'DC'
-            bridge_setup[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_setup[ct]['on_off'] = bool(channel[0] == 2)
             bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
                 3] == 0 else 'Fast'
         return bridge_setup

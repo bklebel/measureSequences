@@ -1,4 +1,5 @@
-# from PyQt5 import QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets
+# , QtCore, uic
 import sys
 from copy import deepcopy
 # import numpy as np
@@ -34,14 +35,15 @@ class SequenceListModel(QtCore.QAbstractListModel):
         finally:
             QTimer.singleShot(2 * 1e3, self.debug_running)
 
-    def headerData(self, section, orientation, role):
+    @staticmethod
+    def headerData(section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return "Sequence"
             else:
                 return '{}'.format(section + 1)
 
-    def rowCount(self, parent=QtCore.QModelIndex()):
+    def rowCount(self):
         return len(self.__sequence)
 
     # def columnCount(self, parent):
@@ -65,7 +67,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
     #         return True
     #     return False
 
-    def flags(self, index):
+    @staticmethod
+    def flags(index):
         if not index.isValid():
             return QtCore.Qt.ItemIsEnabled
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable  # | \
@@ -246,10 +249,11 @@ class ScanListModel(QtCore.QAbstractListModel):
             return True
         return False
 
-    def rowCount(self, parent=QtCore.QModelIndex()):
+    def rowCount(self):
         return len(self.__sequence)
 
-    def flags(self, index):
+    @staticmethod
+    def flags(index):
         if not index.isValid():
             return QtCore.Qt.ItemIsEnabled
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable  # | \

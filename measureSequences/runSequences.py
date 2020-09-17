@@ -344,8 +344,7 @@ class Sequence_runner(object):
 
     @ExceptionHandling
     def execute_python(self, commands: list, **kwargs) -> None:
-        for c in commands:
-            self.executing_commands(commands)
+        self.executing_commands(commands)
 
 
     @ExceptionHandling
