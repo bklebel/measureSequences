@@ -552,7 +552,7 @@ class Sequence_runner:
 
         # approaching very slowly:
         if ApproachMode == "No O'Shoot":
-            for _, temp in enumerate(temperatures):
+            for temp in temperatures:
                 approachTemps = mapping_tofunc(
                     lambda x: np.log(x), start=temperatures[0], end=temp, Nsteps=10
                 )
@@ -572,7 +572,7 @@ class Sequence_runner:
 
         # approaching rather fast:
         if ApproachMode == "Fast":
-            for ct, temp in enumerate(temperatures):
+            for temp in temperatures:
 
                 self.setTemperature(temp)
                 self.checkStable_Temp(
@@ -594,7 +594,7 @@ class Sequence_runner:
                 SpacingCode=SpacingCode,
             )
 
-            for ct, temp in enumerate(temperatures):
+            for temp in temperatures:
 
                 self.checkStable_Temp(
                     temp=temp,
