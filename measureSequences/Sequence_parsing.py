@@ -404,7 +404,7 @@ class Sequence_parser(object):
         text = comm.strip()
         if text.startswith('python'):
             files = parse_strings(comm)
-            return = dict(typ='exec python multiple',
+            return dict(typ='exec python multiple',
                           DisplayText=self.textnesting * self.nesting_level +
                           'Execute python scripts:',
                           commands=[self.parse_python_exec(f) for f in files])
