@@ -9,12 +9,14 @@ Author: bklebel (Benjamin Klebel)
 import time
 import threading
 import numpy as np
+
 # import re
 from tokenize import detect_encoding
 
 # for sequence commands
 import platform
 import os
+
 try:
     import winsound
 except ImportError:
@@ -24,17 +26,18 @@ from .Sequence_parsing import Sequence_parser
 from .util import ExceptionHandling
 
 import logging
-logger = logging.getLogger(
-    'measureSequences.Sequence_runner')
+
+logger = logging.getLogger("measureSequences.Sequence_runner")
 logger.addHandler(logging.NullHandler())
 
 
 class BreakCondition(Exception):
     """docstring for BreakCondition"""
+
     pass
 
 
-def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> 'type(np.array())':
+def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> "type(np.array())":
     """Map a function behaviour to an arbitrary Sequence
 
     Nsteps must be >= 2!
@@ -48,25 +51,30 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> 'type(np.arra
     returns numpy array with the corresponding functional behaviour
     """
     if Nsteps == 1:
-        raise AssertionError('mapping_tofunc: Nsteps must be >= 2!')
+        raise AssertionError("mapping_tofunc: Nsteps must be >= 2!")
     # make base 'grid'
     base = np.linspace(1, 100, Nsteps)
     # make calculated base, which represents the respective function
     cbase = func(base)
     # apply the correct mapping to the intended interval
-    mapped = start + ((end - start) /
-                      (cbase[-1] - cbase[0])) * (cbase - cbase[0])
+    mapped = start + ((end - start) / (cbase[-1] - cbase[0])) * (cbase - cbase[0])
     return mapped
 
 
-class Sequence_runner():
+class Sequence_runner:
     """docstring for Sequence_Thread"""
 
-    def __init__(self, sequence: list, lock=None, isRunning=None, isPaused=None, thresholds_waiting: dict = None, **kwargs) -> None:
+    def __init__(
+        self,
+        sequence: list,
+        lock=None,
+        isRunning=None,
+        isPaused=None,
+        thresholds_waiting: dict = None,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
-        self._logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__
-        )
+        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
         self._isRunning = True if isRunning is None else isRunning
         self._isPaused = False if isPaused is None else isPaused
         self.sequence = sequence
@@ -81,7 +89,7 @@ class Sequence_runner():
         # self.temp_VTI_offset = 5
         self.subrunner = None
 
-        self.datafile = ''
+        self.datafile = ""
         self.scan_time_force = False
 
     def running(self) -> str:
@@ -91,8 +99,8 @@ class Sequence_runner():
             try:
                 self.executing_commands(self.sequence)
             except BreakCondition:
-                return 'Sequence Aborted!'
-        return 'Sequence Finished!'
+                return "Sequence Aborted!"
+        return "Sequence Finished!"
 
     @ExceptionHandling
     def executing_commands(self, commands: list) -> None:
@@ -101,9 +109,11 @@ class Sequence_runner():
             try:
                 self.execute_sequence_entry(entry)
             except NotImplementedError as e:
-                self.message_to_user(f'An error occured: {e}. Did you maybe' +
-                                     ' try to call a function/method which' +
-                                     ' needs to be manually overriden?')
+                self.message_to_user(
+                    f"An error occured: {e}. Did you maybe"
+                    + " try to call a function/method which"
+                    + " needs to be manually overriden?"
+                )
             # except AttributeError as e:
             #     self.message_to_user(f'An error occured: {e}. Did you maybe' +
             #                          ' try to call a function/method which' +
@@ -128,7 +138,7 @@ class Sequence_runner():
     def stop(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
-        logger.info('Sequence was aborted')
+        logger.info("Sequence was aborted")
         if self.subrunner:
             self.subrunner.stop()
 
@@ -136,7 +146,7 @@ class Sequence_runner():
     def pause(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isPaused = True
-        logger.info('Sequence was paused')
+        logger.info("Sequence was paused")
         if self.subrunner:
             self.subrunner.pause()
 
@@ -144,7 +154,7 @@ class Sequence_runner():
     def continue_(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isPaused = False
-        logger.info('Sequence was continued')
+        logger.info("Sequence was continued")
         if self.subrunner:
             self.subrunner.continue_()
 
@@ -152,50 +162,50 @@ class Sequence_runner():
     def execute_sequence_entry(self, entry: dict) -> None:
         """execute the one entry of a list of commands"""
         self.check_running()
-        logger.info(f'executing command: {entry}')
+        logger.info(f"executing command: {entry}")
 
-        if entry['typ'] == 'Shutdown':
+        if entry["typ"] == "Shutdown":
             self.Shutdown()
-        if entry['typ'] == 'Wait':
+        if entry["typ"] == "Wait":
             self.execute_waiting(**entry)
-        if entry['typ'] == 'beep':
+        if entry["typ"] == "beep":
             self.execute_beep(**entry)
-        if entry['typ'] == 'chain sequence':
+        if entry["typ"] == "chain sequence":
             self.execute_chain_sequence(**entry)
-        if entry['typ'] == 'remark':
-            self.execute_remark(entry['text'])
-        if entry['typ'] == 'sequence_message':
+        if entry["typ"] == "remark":
+            self.execute_remark(entry["text"])
+        if entry["typ"] == "sequence_message":
             self.execute_sequence_message(**entry)
-        if entry['typ'] == 'exec python multiple':
+        if entry["typ"] == "exec python multiple":
             self.execute_python(**entry)
-        if entry['typ'] == 'exec python':
+        if entry["typ"] == "exec python":
             self.execute_python_single(**entry)
 
-        if entry['typ'] == 'scan_T':
+        if entry["typ"] == "scan_T":
             self.execute_scan_T(**entry)
-        if entry['typ'] == 'scan_H':
+        if entry["typ"] == "scan_H":
             self.execute_scan_H(**entry)
-        if entry['typ'] == 'scan_time':
+        if entry["typ"] == "scan_time":
             self.execute_scan_time(**entry)
-        if entry['typ'] == 'scan_position':
+        if entry["typ"] == "scan_position":
             self.execute_scan_P(**entry)
 
-        if entry['typ'] == 'chamber_operation':
+        if entry["typ"] == "chamber_operation":
             self.execute_chamber(**entry)
-        if entry['typ'] == 'set_T':
+        if entry["typ"] == "set_T":
             self.execute_set_Temperature(**entry)
-        if entry['typ'] == 'set_Field':
+        if entry["typ"] == "set_Field":
             self.execute_set_Field(**entry)
-        if entry['typ'] == 'set_Position':
+        if entry["typ"] == "set_Position":
             self.execute_set_Position(**entry)
 
-        if entry['typ'] == 'res_change_datafile':
+        if entry["typ"] == "res_change_datafile":
             self.execute_res_change_datafile(**entry)
-        if entry['typ'] == 'res_datafilecomment':
+        if entry["typ"] == "res_datafilecomment":
             self.execute_res_datafilecomment(**entry)
-        if entry['typ'] == 'res_measure':
+        if entry["typ"] == "res_measure":
             self.execute_res_measure(**entry)
-        if entry['typ'] == 'res_scan_excitation':
+        if entry["typ"] == "res_scan_excitation":
             # has yet to be implemented!
             pass
 
@@ -203,28 +213,30 @@ class Sequence_runner():
     def execute_chamber(self, operation: str, **kwargs) -> None:
         """execute the specified chamber operation"""
 
-        if operation == 'seal immediate':
+        if operation == "seal immediate":
             self.chamber_seal()
 
-        if operation == 'purge then seal':
+        if operation == "purge then seal":
             self.chamber_purge()
             self.chamber_seal()
 
-        if operation == 'vent then seal':
+        if operation == "vent then seal":
             self.chamber_vent()
             self.chamber_seal()
 
-        if operation == 'pump continuous':
-            self.chamber_continuous('pumping')
+        if operation == "pump continuous":
+            self.chamber_continuous("pumping")
 
-        if operation == 'vent continuous':
-            self.chamber_continuous('venting')
+        if operation == "vent continuous":
+            self.chamber_continuous("venting")
 
-        if operation == 'high vacuum':
+        if operation == "high vacuum":
             self.chamber_high_vacuum()
 
     @ExceptionHandling
-    def execute_waiting(self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, **kwargs):
+    def execute_waiting(
+        self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, **kwargs
+    ):
         """wait for specified variables, including a Delay
 
         target variables are 'self._setpoint_VARIABLE'
@@ -235,21 +247,27 @@ class Sequence_runner():
         returns: None
         """
         if Temp:
-            self.wait_for(target=self._setpoint_temp,
-                          getfunc=self.getTemperature,
-                          threshold=self.thresholds_waiting['Temp'])
+            self.wait_for(
+                target=self._setpoint_temp,
+                getfunc=self.getTemperature,
+                threshold=self.thresholds_waiting["Temp"],
+            )
         if Field:
-            self.wait_for(target=self._setpoint_field,
-                          getfunc=self.getField,
-                          threshold=self.thresholds_waiting['Field'])
+            self.wait_for(
+                target=self._setpoint_field,
+                getfunc=self.getField,
+                threshold=self.thresholds_waiting["Field"],
+            )
         if Position:
-            self.wait_for(target=self._setpoint_pos,
-                          getfunc=self.getPosition,
-                          threshold=self.thresholds_waiting['Position'])
+            self.wait_for(
+                target=self._setpoint_pos,
+                getfunc=self.getPosition,
+                threshold=self.thresholds_waiting["Position"],
+            )
         if Chamber:
-            self.wait_for(target=self._setpoint_chamber,
-                          getfunc=self.getChamber,
-                          threshold=0)
+            self.wait_for(
+                target=self._setpoint_chamber, getfunc=self.getChamber, threshold=0
+            )
 
         delay_start = 0
         delay_step = 0.01
@@ -266,25 +284,29 @@ class Sequence_runner():
         length in seconds
         frequency in Hertz
         """
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             winsound.Beep(int(frequency), int(length * 1e3))
-        if platform.system() == 'Linux':
-            answer = os.system(f'beep -f {frequency} -l {length}')
+        if platform.system() == "Linux":
+            answer = os.system(f"beep -f {frequency} -l {length}")
             if answer:
-                print('\a')  # ring the command line bell
+                print("\a")  # ring the command line bell
                 self.message_to_user(
-                    'The program "beep" had a problem. Maybe it is not installed?')
-        if platform.system() == 'Darwin':
-            print('\a')
+                    'The program "beep" had a problem. Maybe it is not installed?'
+                )
+        if platform.system() == "Darwin":
+            print("\a")
             self.message_to_user(
-                'no easily controllable beep function on mac available')
+                "no easily controllable beep function on mac available"
+            )
 
     @ExceptionHandling
-    def wait_for(self, getfunc, target, threshold=0.1, additional_condition=True, **kwargs) -> None:
+    def wait_for(
+        self, getfunc, target, threshold=0.1, additional_condition=True, **kwargs
+    ) -> None:
         """repeatedly check whether the respective value was reached,
-            given the respective threshold, return once it has
-            produce a possibility to abort the sequence, through
-            repeated check for value, for breaking condition, and sleeping
+        given the respective threshold, return once it has
+        produce a possibility to abort the sequence, through
+        repeated check for value, for breaking condition, and sleeping
         """
         value_now = getfunc()
 
@@ -304,16 +326,18 @@ class Sequence_runner():
         parser = Sequence_parser(sequence_file=new_file_seq[:-1])
         commands = parser.data
 
-        self.subrunner = self.__class__(sequence=commands,
-                                        isRunning=self._isRunning,
-                                        isPaused=self._isPaused,
-                                        thresholds_waiting=self.thresholds_waiting,
-                                        lock=threading.Lock())
+        self.subrunner = self.__class__(
+            sequence=commands,
+            isRunning=self._isRunning,
+            isPaused=self._isPaused,
+            thresholds_waiting=self.thresholds_waiting,
+            lock=threading.Lock(),
+        )
 
         done = self.subrunner.running()
-        if done == 'Aborted':
+        if done == "Aborted":
             raise BreakCondition
-        if done == 'Sequence finished!':
+        if done == "Sequence finished!":
             self.subrunner = None
 
     @ExceptionHandling
@@ -329,26 +353,27 @@ class Sequence_runner():
         using globals() and locals(), the python script is in the Namespace of
         'right here', in this function.
         checks file for encoding"""
-        with open(file, 'rb') as fe:
+        with open(file, "rb") as fe:
             try:
                 enc = detect_encoding(fe.readline)[0]
             except SyntaxError:
-                enc = 'utf-8'
+                enc = "utf-8"
 
-        with open(file, 'r', encoding=enc) as f:
+        with open(file, "r", encoding=enc) as f:
             fc = f.read()
-        if not fc.endswith('\n'):
-            fc += '\n'
-        code = compile(fc, file, 'exec')
+        if not fc.endswith("\n"):
+            fc += "\n"
+        code = compile(fc, file, "exec")
         exec(code, globals(), locals())
 
     @ExceptionHandling
     def execute_python(self, commands: list, **kwargs) -> None:
         self.executing_commands(commands)
 
-
     @ExceptionHandling
-    def execute_scan_time(self, time_total: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs) -> None:
+    def execute_scan_time(
+        self, time_total: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs
+    ) -> None:
         """execute a Time scan
         The intervals t between starting to invoke all commands in the list
         are:
@@ -368,10 +393,10 @@ class Sequence_runner():
                 TODO: test whether this actually works
         """
 
-        if SpacingCode == 'uniform':
+        if SpacingCode == "uniform":
             times = mapping_tofunc(lambda x: x, 0, time_total, Nsteps)
 
-        elif SpacingCode == 'ln(t)':
+        elif SpacingCode == "ln(t)":
             times = mapping_tofunc(lambda x: np.log(x), 0, time_total, Nsteps)
 
         if np.isclose(time_total, 0):
@@ -401,8 +426,11 @@ class Sequence_runner():
 
             timerlist = []
             for t in times:
-                timerlist.append(threading.Timer(
-                    t, self.executing_commands, kwargs=dict(commands=commands)))
+                timerlist.append(
+                    threading.Timer(
+                        t, self.executing_commands, kwargs=dict(commands=commands)
+                    )
+                )
                 timerlist[-1].start()
 
             while any(x.isAlive() for x in timerlist):
@@ -416,37 +444,49 @@ class Sequence_runner():
                     raise BreakCondition
 
     @ExceptionHandling
-    def execute_scan_H(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, EndMode: str, **kwargs) -> None:
-        '''execute a Field scan'''
+    def execute_scan_H(
+        self,
+        start: float,
+        end: float,
+        Nsteps: int,
+        SweepRate: float,
+        SpacingCode: str,
+        ApproachMode: str,
+        commands: list,
+        EndMode: str,
+        **kwargs,
+    ) -> None:
+        """execute a Field scan"""
 
-        if SpacingCode == 'uniform':
+        if SpacingCode == "uniform":
             fields = mapping_tofunc(lambda x: x, start, end, Nsteps)
 
-        elif SpacingCode == 'H*H':
+        elif SpacingCode == "H*H":
             fields = mapping_tofunc(lambda x: np.square(x), start, end, Nsteps)
 
-        elif SpacingCode == 'logH':
+        elif SpacingCode == "logH":
             fields = mapping_tofunc(lambda x: np.log(x), start, end, Nsteps)
 
-        elif SpacingCode == '1/H':
+        elif SpacingCode == "1/H":
             fields = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
 
-        elif SpacingCode == 'H^1/2':
-            fields = mapping_tofunc(lambda x: x**0.5, start, end, Nsteps)
+        elif SpacingCode == "H^1/2":
+            fields = mapping_tofunc(lambda x: x ** 0.5, start, end, Nsteps)
 
-        if ApproachMode == 'Linear':
+        if ApproachMode == "Linear":
             for field in fields:
                 self._setpoint_field = field
                 self.setField(field=field, EndMode=EndMode)
                 self.executing_commands(commands)
 
-        if ApproachMode == 'No O\'Shoot':
+        if ApproachMode == "No O'Shoot":
             for ct, field in enumerate(fields):
                 first = fields[0] if ct == 0 else fields[ct - 1]
-                approachFields = mapping_tofunc(lambda x: np.log(
-                    x), start=first, end=field, Nsteps=10)
+                approachFields = mapping_tofunc(
+                    lambda x: np.log(x), start=first, end=field, Nsteps=10
+                )
                 for t in approachFields:
-                    self.setField(field=t, EndMode='driven')
+                    self.setField(field=t, EndMode="driven")
                     # self._setpoint_field = t
                     # self.checkStable_Temp(Temp=t,
                     #                       direction=np.sign(temp - first),
@@ -454,117 +494,160 @@ class Sequence_runner():
 
                     self.execute_waiting(Field=True, Delay=10)
                 # self.checkStable_Temp(
-                    # Temp=temp, direction=0, ApproachMode=ApproachMode)
+                # Temp=temp, direction=0, ApproachMode=ApproachMode)
                 # self.setFieldEndMode(EndMode=EndMode)
                 self.executing_commands(commands)
 
-        if ApproachMode == 'Oscillate':
-            raise NotImplementedError('oscillating field ApproachMode')
+        if ApproachMode == "Oscillate":
+            raise NotImplementedError("oscillating field ApproachMode")
 
-        if ApproachMode == 'Sweep':
+        if ApproachMode == "Sweep":
             self.scan_H_programSweep(
-                start=start, end=end, Nsteps=Nsteps, fields=fields, SweepRate=SweepRate, SpacingCode=SpacingCode, EndMode=EndMode)
+                start=start,
+                end=end,
+                Nsteps=Nsteps,
+                fields=fields,
+                SweepRate=SweepRate,
+                SpacingCode=SpacingCode,
+                EndMode=EndMode,
+            )
             for ct, field in enumerate(fields):
                 first = fields[0] if ct == 0 else fields[ct - 1]
-                self.checkField(Field=field,
-                                direction=np.sign(field - first),
-                                ApproachMode='Sweep')
+                self.checkField(
+                    Field=field, direction=np.sign(field - first), ApproachMode="Sweep"
+                )
                 self.executing_commands(commands)
 
         self.setFieldEndMode(EndMode=EndMode)
 
     # @ExceptionHandling
-    def execute_scan_T(self, start: float, end: float, Nsteps: int, SweepRate: float, SpacingCode: str, ApproachMode: str, commands: list, temperatures_forced=None, **kwargs) -> None:
+    def execute_scan_T(
+        self,
+        start: float,
+        end: float,
+        Nsteps: int,
+        SweepRate: float,
+        SpacingCode: str,
+        ApproachMode: str,
+        commands: list,
+        temperatures_forced=None,
+        **kwargs,
+    ) -> None:
         """perform a temperature scan with given parameters"""
 
         if temperatures_forced:
             temperatures = temperatures_forced
         else:
             # building the individual temperatures to scan through
-            if SpacingCode == 'uniform':
+            if SpacingCode == "uniform":
                 temperatures = mapping_tofunc(lambda x: x, start, end, Nsteps)
 
-            elif SpacingCode == '1/T':
-                temperatures = mapping_tofunc(
-                    lambda x: 1 / x, start, end, Nsteps)
+            elif SpacingCode == "1/T":
+                temperatures = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
 
-            elif SpacingCode == 'logT':
-                temperatures = mapping_tofunc(
-                    lambda x: np.log(x), start, end, Nsteps)
+            elif SpacingCode == "logT":
+                temperatures = mapping_tofunc(lambda x: np.log(x), start, end, Nsteps)
 
         # scanning through the temperatures:
 
         # approaching very slowly:
-        if ApproachMode == "No O\'Shoot":
+        if ApproachMode == "No O'Shoot":
             for _, temp in enumerate(temperatures):
-                approachTemps = mapping_tofunc(lambda x: np.log(
-                    x), start=temperatures[0], end=temp, Nsteps=10)
+                approachTemps = mapping_tofunc(
+                    lambda x: np.log(x), start=temperatures[0], end=temp, Nsteps=10
+                )
                 for t in approachTemps:
                     self.setTemperature(t)
                     # self._setpoint_temp = t
-                    self.checkStable_Temp(temp=t,
-                                          direction=np.sign(
-                                              temperatures[-1] - temperatures[0]),
-                                          ApproachMode='Fast')
+                    self.checkStable_Temp(
+                        temp=t,
+                        direction=np.sign(temperatures[-1] - temperatures[0]),
+                        ApproachMode="Fast",
+                    )
 
                     self.execute_waiting(Temp=True, Delay=10)
-                self.checkStable_Temp(
-                    temp=temp, direction=0, ApproachMode=ApproachMode)
+                self.checkStable_Temp(temp=temp, direction=0, ApproachMode=ApproachMode)
 
                 self.executing_commands(commands)
 
         # approaching rather fast:
-        if ApproachMode == 'Fast':
+        if ApproachMode == "Fast":
             for ct, temp in enumerate(temperatures):
 
                 self.setTemperature(temp)
-                self.checkStable_Temp(temp=temp,
-                                      direction=np.sign(
-                                          temperatures[-1] - temperatures[0]),
-                                      ApproachMode=ApproachMode)
+                self.checkStable_Temp(
+                    temp=temp,
+                    direction=np.sign(temperatures[-1] - temperatures[0]),
+                    ApproachMode=ApproachMode,
+                )
 
                 self.executing_commands(commands)
 
         # sweeping through the values:
-        if ApproachMode == 'Sweep':
-            self.scan_T_programSweep(start=start, end=end, Nsteps=Nsteps,
-                                     temperatures=temperatures, SweepRate=SweepRate, SpacingCode=SpacingCode)
+        if ApproachMode == "Sweep":
+            self.scan_T_programSweep(
+                start=start,
+                end=end,
+                Nsteps=Nsteps,
+                temperatures=temperatures,
+                SweepRate=SweepRate,
+                SpacingCode=SpacingCode,
+            )
 
             for ct, temp in enumerate(temperatures):
 
-                self.checkStable_Temp(temp=temp,
-                                      direction=np.sign(
-                                          temperatures[-1] - temperatures[0]),
-                                      ApproachMode='Sweep')
+                self.checkStable_Temp(
+                    temp=temp,
+                    direction=np.sign(temperatures[-1] - temperatures[0]),
+                    ApproachMode="Sweep",
+                )
 
                 self.executing_commands(commands)
 
     @ExceptionHandling
-    def execute_scan_P(self, start: float, end: float, Nsteps: int, speedindex: int, ApproachMode: str, commands: list, **kwargs) -> None:
+    def execute_scan_P(
+        self,
+        start: float,
+        end: float,
+        Nsteps: int,
+        speedindex: int,
+        ApproachMode: str,
+        commands: list,
+        **kwargs,
+    ) -> None:
         """perform a position scan with the given parameters"""
 
         positions = mapping_tofunc(lambda x: x, start, end, Nsteps)
 
-        if ApproachMode == 'Pause':
+        if ApproachMode == "Pause":
             for pos in positions:
                 self.setPosition(position=pos, speedindex=speedindex)
-                self.wait_for(target=self._setpoint_pos,
-                              getfunc=self.getPosition,
-                              threshold=self.thresholds_waiting['Position'])
+                self.wait_for(
+                    target=self._setpoint_pos,
+                    getfunc=self.getPosition,
+                    threshold=self.thresholds_waiting["Position"],
+                )
                 self.executing_commands(commands)
 
-        if ApproachMode == 'Sweep':
-            self.scan_P_programSweep(start=start, end=end, Nsteps=Nsteps,
-                                     positions=positions, speedindex=speedindex)
+        if ApproachMode == "Sweep":
+            self.scan_P_programSweep(
+                start=start,
+                end=end,
+                Nsteps=Nsteps,
+                positions=positions,
+                speedindex=speedindex,
+            )
             for ct, pos in enumerate(positions):
                 first = positions[0] if ct == 0 else positions[ct - 1]
-                self.checkPosition(position=pos,
-                                   direction=np.sign(pos - first),
-                                   ApproachMode='Sweep')
+                self.checkPosition(
+                    position=pos, direction=np.sign(pos - first), ApproachMode="Sweep"
+                )
                 self.executing_commands(commands)
 
     @ExceptionHandling
-    def execute_set_Temperature(self, Temp: float, ApproachMode: str, SweepRate: float = None, **kwargs) -> None:
+    def execute_set_Temperature(
+        self, Temp: float, ApproachMode: str, SweepRate: float = None, **kwargs
+    ) -> None:
         """execute the set temperature command
 
         in case a SweepRate is supplied, use it in a scan_T fashion
@@ -576,13 +659,25 @@ class Sequence_runner():
         TODO: include ApproachModes
         """
         if SweepRate:
-            self.scan_T_programSweep(start=self.getTemperature(
-            ), end=Temp, Nsteps=2, temperatures=None, SweepRate=SweepRate)
+            self.scan_T_programSweep(
+                start=self.getTemperature(),
+                end=Temp,
+                Nsteps=2,
+                temperatures=None,
+                SweepRate=SweepRate,
+            )
         else:
             self.setTemperature(temperature=Temp)
 
     @ExceptionHandling
-    def execute_set_Field(self, Field: float, EndMode: str, ApproachMode: str, SweepRate: float = None, **kwargs) -> None:
+    def execute_set_Field(
+        self,
+        Field: float,
+        EndMode: str,
+        ApproachMode: str,
+        SweepRate: float = None,
+        **kwargs,
+    ) -> None:
         """execute the set Field command
 
         in case a SweepRate is supplied, use it in a scan_H fashion
@@ -594,60 +689,74 @@ class Sequence_runner():
         TODO: include ApproachModes
         """
         if SweepRate:
-            self.scan_H_programSweep(start=self.getField(
-            ), end=Field, Nsteps=2, fields=None, SweepRate=SweepRate, EndMode=EndMode)
+            self.scan_H_programSweep(
+                start=self.getField(),
+                end=Field,
+                Nsteps=2,
+                fields=None,
+                SweepRate=SweepRate,
+                EndMode=EndMode,
+            )
         else:
             self.setField(field=Field, EndMode=EndMode)
 
     @ExceptionHandling
-    def execute_set_Position(self, position: float, speedindex: int, Mode: str, **kwargs) -> None:
+    def execute_set_Position(
+        self, position: float, speedindex: int, Mode: str, **kwargs
+    ) -> None:
         """execute the set Position command"""
 
-        if Mode == 'move to position':
+        if Mode == "move to position":
             self.setPosition(position=position, speedindex=speedindex)
 
-        if Mode == 'move to index and define':
+        if Mode == "move to index and define":
             raise NotImplementedError(
-                'Mode "move to index and define" functionality not yet implemented')
+                'Mode "move to index and define" functionality not yet implemented'
+            )
 
-        if Mode == 'redefine present position':
+        if Mode == "redefine present position":
             raise NotImplementedError(
-                'Mode "redefine present position" functionality not yet implemented')
+                'Mode "redefine present position" functionality not yet implemented'
+            )
 
     @ExceptionHandling
-    def execute_res_measure(self, dataflags: dict, reading_count: int, bridge_conf: dict, **kwargs) -> None:
+    def execute_res_measure(
+        self, dataflags: dict, reading_count: int, bridge_conf: dict, **kwargs
+    ) -> None:
         """execute the resistivity: measure command"""
 
         values_measured = []
         values_transposed = {}
-        values_merged = dict(non_numeric={}, mean={},
-                             median={}, stddev={})
+        values_merged = dict(non_numeric={}, mean={}, median={}, stddev={})
 
         reading_count = int(reading_count)
         # print(reading_count)
 
         for _ in range(reading_count):
-            values_measured.append(self.res_measure(
-                dataflags=dataflags, bridge_conf=bridge_conf))
+            values_measured.append(
+                self.res_measure(dataflags=dataflags, bridge_conf=bridge_conf)
+            )
 
         keys_corrupted = []
         for key in values_measured[0]:
             try:
-                values_transposed[key] = [values_measured[i][key]
-                                          for i in range(reading_count)]
+                values_transposed[key] = [
+                    values_measured[i][key] for i in range(reading_count)
+                ]
             except KeyError as e:
                 keys_corrupted.append(key)
-                self.message_to_user(f'An error occured: {e}. Something went wrong in the resistivity measuring procedure.')
+                self.message_to_user(
+                    f"An error occured: {e}. Something went wrong in the resistivity measuring procedure."
+                )
 
         for key in values_transposed:
             if any(not isinstance(val, (int, float)) for val in values_transposed[key]):
-                values_merged['non_numeric'][key] = values_transposed[key]
+                values_merged["non_numeric"][key] = values_transposed[key]
                 continue
             if key not in keys_corrupted:
-                values_merged['mean'][key] = np.mean(values_transposed[key])
-                values_merged['median'][key] = np.median(
-                    values_transposed[key])
-                values_merged['stddev'][key] = np.std(values_transposed[key])
+                values_merged["mean"][key] = np.mean(values_transposed[key])
+                values_merged["median"][key] = np.median(values_transposed[key])
+                values_merged["stddev"][key] = np.std(values_transposed[key])
 
         self.measuring_store_data(data=values_merged, datafile=self.datafile)
 
@@ -657,7 +766,9 @@ class Sequence_runner():
         self.res_datafilecomment(comment=comment, datafile=self.datafile)
 
     @ExceptionHandling
-    def execute_res_change_datafile(self, new_file_data: str, mode: str, **kwargs) -> None:
+    def execute_res_change_datafile(
+        self, new_file_data: str, mode: str, **kwargs
+    ) -> None:
         """execute the resistivity: datafile-comment command"""
         self.datafile = new_file_data
         self.res_change_datafile(datafile=new_file_data, mode=mode)
@@ -667,62 +778,98 @@ class Sequence_runner():
         """use the given remark
 
         shoud be overriden in case the remark means anything"""
-        self.message_to_user(f'remark: {remark}')
+        self.message_to_user(f"remark: {remark}")
 
     @ExceptionHandling
-    def execute_sequence_message(self, timeout_waiting_min: float, message_direct: str, email_receiver: str, email_subject: str, email_cc: str, email_message: str, email_attachement_path: str, message_type: str, **kwargs) -> None:
+    def execute_sequence_message(
+        self,
+        timeout_waiting_min: float,
+        message_direct: str,
+        email_receiver: str,
+        email_subject: str,
+        email_cc: str,
+        email_message: str,
+        email_attachement_path: str,
+        message_type: str,
+        **kwargs,
+    ) -> None:
         """display the sequence message to the user, possibly send email
 
         the sequence should continue to run after the message was cleared,
         or the timeout_waiting_min time in minutes has passed
-        should be overridden for advanced options! """
-        self.message_to_user(f'sequence message: {message_type}: {message_direct}')
+        should be overridden for advanced options!"""
+        self.message_to_user(f"sequence message: {message_type}: {message_direct}")
 
     @ExceptionHandling
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
 
-    @ExceptionHandling
-        default is printing to the command line
-        may be overriden!
+        @ExceptionHandling
+            default is printing to the command line
+            may be overriden!
         """
         super().message_to_user(message)
         # print(message)
 
     @ExceptionHandling
-    def scan_T_programSweep(self, start: float, end: float, Nsteps: float, temperatures: list, SweepRate: float, SpacingCode: str = 'uniform') -> None:
+    def scan_T_programSweep(
+        self,
+        start: float,
+        end: float,
+        Nsteps: float,
+        temperatures: list,
+        SweepRate: float,
+        SpacingCode: str = "uniform",
+    ) -> None:
         """
-            Method to be overriden by a child class
-            here, the devices should be programmed to start
-            the respective Sweep of temperatures
+        Method to be overriden by a child class
+        here, the devices should be programmed to start
+        the respective Sweep of temperatures
         """
         raise NotImplementedError
 
     @ExceptionHandling
-    def scan_H_programSweep(self, start: float, end: float, Nsteps: float, fields: list, SweepRate: float, EndMode: str, SpacingCode: str = 'uniform') -> None:
+    def scan_H_programSweep(
+        self,
+        start: float,
+        end: float,
+        Nsteps: float,
+        fields: list,
+        SweepRate: float,
+        EndMode: str,
+        SpacingCode: str = "uniform",
+    ) -> None:
         """
-            Method to be overriden by a child class
-            here, the devices should be programmed to start
-            the respective Sweep for field values
+        Method to be overriden by a child class
+        here, the devices should be programmed to start
+        the respective Sweep for field values
         """
         raise NotImplementedError
 
     @ExceptionHandling
-    def scan_P_programSweep(self, start: float, end: float, Nsteps: float, positions: list, speedindex: float, SpacingCode: str = 'uniform') -> None:
+    def scan_P_programSweep(
+        self,
+        start: float,
+        end: float,
+        Nsteps: float,
+        positions: list,
+        speedindex: float,
+        SpacingCode: str = "uniform",
+    ) -> None:
         """
-            Method to be overriden by a child class
-            here, the devices should be programmed to start
-            the respective Sweep of positions
+        Method to be overriden by a child class
+        here, the devices should be programmed to start
+        the respective Sweep of positions
         """
         raise NotImplementedError
 
     @ExceptionHandling
     def setField(self, field: float, EndMode: str) -> None:
         """
-            Method to be overridden/injected by a child class
-            here, all logic which is needed to go to a certain field directly
-            needs to be implemented.
-            TODO: override method
+        Method to be overridden/injected by a child class
+        here, all logic which is needed to go to a certain field directly
+        needs to be implemented.
+        TODO: override method
         """
         self._setpoint_field = field
         super().setField(field=field, EndMode=EndMode)
@@ -738,11 +885,11 @@ class Sequence_runner():
     @ExceptionHandling
     def setTemperature(self, temperature: float) -> None:
         """
-            Method to be overridden/injected by a child class
-            here, all logic which is needed to go to a
-            certain temperature directly
-            needs to be implemented.
-            TODO: override method
+        Method to be overridden/injected by a child class
+        here, all logic which is needed to go to a
+        certain temperature directly
+        needs to be implemented.
+        TODO: override method
         """
         self._setpoint_temp = temperature
         super().setTemperature(temperature=temperature)
@@ -761,11 +908,11 @@ class Sequence_runner():
     @ExceptionHandling
     def setPosition(self, position: float, speedindex: int) -> None:
         """
-            Method to be overridden/injected by a child class
-            here, all logic which is needed to go to a
-            certain position directly
-            needs to be implemented.
-            TODO: override method
+        Method to be overridden/injected by a child class
+        here, all logic which is needed to go to a
+        certain position directly
+        needs to be implemented.
+        TODO: override method
         """
         self._setpoint_pos = position
         super().setPosition(position=position, speedindex=speedindex)
@@ -774,10 +921,10 @@ class Sequence_runner():
     @ExceptionHandling
     def getPosition(self) -> float:
         """
-            Method to be overriden by child class
-            implement checking the position
+        Method to be overriden by child class
+        implement checking the position
 
-            returns: position as a float
+        returns: position as a float
         """
         raise NotImplementedError
 
@@ -802,7 +949,9 @@ class Sequence_runner():
         raise NotImplementedError
 
     @ExceptionHandling
-    def checkStable_Temp(self, temp: float, direction: int = 0, ApproachMode: str = 'Sweep') -> bool:
+    def checkStable_Temp(
+        self, temp: float, direction: int = 0, ApproachMode: str = "Sweep"
+    ) -> bool:
         """wait for the temperature to stabilize
 
         param: Temp:
@@ -827,7 +976,9 @@ class Sequence_runner():
         raise NotImplementedError
 
     @ExceptionHandling
-    def checkField(self, Field: float, direction: int = 0, ApproachMode: str = 'Sweep') -> bool:
+    def checkField(
+        self, Field: float, direction: int = 0, ApproachMode: str = "Sweep"
+    ) -> bool:
         """check whether the Field has passed a certain value
 
         param: Field:
@@ -852,7 +1003,9 @@ class Sequence_runner():
         raise NotImplementedError
 
     @ExceptionHandling
-    def checkPosition(self, position: float, direction: int = 0, ApproachMode: str = 'Sweep') -> bool:
+    def checkPosition(
+        self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
+    ) -> bool:
         """check whether the Field has passed a certain value
 
         param: position:
@@ -908,9 +1061,9 @@ class Sequence_runner():
     @ExceptionHandling
     def chamber_continuous(self, action) -> bool:
         """pump or vent the chamber continuously"""
-        if action == 'pumping':
+        if action == "pumping":
             raise NotImplementedError
-        if action == 'venting':
+        if action == "venting":
             raise NotImplementedError
 
     @ExceptionHandling
@@ -924,33 +1077,33 @@ class Sequence_runner():
     @ExceptionHandling
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
         """Measure resistivity
-            Must be overridden!
-            return dict with all data according to the set dataflags
-            this dict should be flat, just numbers, no nesting
+        Must be overridden!
+        return dict with all data according to the set dataflags
+        this dict should be flat, just numbers, no nesting
         """
         raise NotImplementedError
 
     @ExceptionHandling
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
-            Must be overridden!
+        Must be overridden!
         """
         raise NotImplementedError
 
     @ExceptionHandling
     def res_datafilecomment(self, comment: str, datafile: str) -> None:
         """write a comment to the datafile
-            Must be overridden!
+        Must be overridden!
         """
         raise NotImplementedError
 
     @ExceptionHandling
     def res_change_datafile(self, datafile: str, mode: str) -> None:
         """write a comment to the datafile
-            Must be overridden!
-            mode ('a' or 'w') determines whether data should be
-                'a': appended
-                'w': written over
-            (to) the new datafile
+        Must be overridden!
+        mode ('a' or 'w') determines whether data should be
+            'a': appended
+            'w': written over
+        (to) the new datafile
         """
         raise NotImplementedError

@@ -29,11 +29,11 @@ from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 
 import functools
+
 # import inspect
 import logging
 
-logger = logging.getLogger(
-    'measureSequences.utility')
+logger = logging.getLogger("measureSequences.utility")
 logger.addHandler(logging.NullHandler())
 
 
@@ -135,14 +135,14 @@ def ScanningSize(start, end, parameter):
 
 class Window_ui(QtWidgets.QWidget):
     """Class for a small window, the UI of which is loaded from the .ui file
-        emits a signal when being closed
+    emits a signal when being closed
     """
 
     sig_closing = pyqtSignal()
 
     def __init__(self, ui_file=None, **kwargs):
-        if 'lock' in kwargs:
-            del kwargs['lock']
+        if "lock" in kwargs:
+            del kwargs["lock"]
         super().__init__(**kwargs)
         if ui_file is not None:
             loadUi(ui_file, self)

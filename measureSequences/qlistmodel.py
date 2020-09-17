@@ -1,15 +1,19 @@
 from PyQt5 import QtWidgets
+
 # , QtCore, uic
 import sys
 from copy import deepcopy
+
 # import numpy as np
 # from pickle import dumps, load, loads
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore
+
 # import math
 import logging
 
 from .util import ScanningN
+
 # needed for the stepsize
 from .util import ScanningSize
 
@@ -21,9 +25,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
     def __init__(self, sequence=None, parent=None):
         QtCore.QAbstractListModel.__init__(self, parent)
         self.__sequence = [] if sequence is None else sequence
-        self._logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__
-        )
+        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
 
         # self.countinserted = 0
         # self.root = Node(dict(DisplayText='specialnode', arbdata='weha'))
@@ -40,7 +42,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return "Sequence"
-            return '{}'.format(section + 1)
+            return "{}".format(section + 1)
 
     def rowCount(self):
         return len(self.__sequence)
@@ -51,11 +53,11 @@ class SequenceListModel(QtCore.QAbstractListModel):
     def data(self, index, role):
         row = index.row()
         if role == QtCore.Qt.EditRole:
-            return self.__sequence[row]['DisplayText']
+            return self.__sequence[row]["DisplayText"]
         # if role == QtCore.Qt.ToolTipRole:
         #     return "Hex code: " + self.__sequence[index.row()].name()
         if role == QtCore.Qt.DisplayRole:
-            value = self.__sequence[row]['DisplayText']
+            value = self.__sequence[row]["DisplayText"]
             return value
 
     # def setData(self, index, value, role = QtCore.Qt.EditRole):
@@ -73,9 +75,9 @@ class SequenceListModel(QtCore.QAbstractListModel):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable  # | \
         # QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsDropEnabled
 
-    #=====================================================#
-    #INSERTING & REMOVING
-    #=====================================================#
+    # =====================================================#
+    # INSERTING & REMOVING
+    # =====================================================#
 
     def addItem(self, item):
         parent = QtCore.QModelIndex()
@@ -176,16 +178,21 @@ class ScanListModel(QtCore.QAbstractListModel):
     sig_stepsize = QtCore.pyqtSignal(float)
     sig_Nsteps = QtCore.pyqtSignal(int)
 
-    def __init__(self, signalreceiver, start=None, end=None, Nsteps=None, SizeSteps=None, **kwargs):
+    def __init__(
+        self,
+        signalreceiver,
+        start=None,
+        end=None,
+        Nsteps=None,
+        SizeSteps=None,
+        **kwargs
+    ):
         super().__init__(**kwargs)
-        self._logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__
-        )
+        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
 
         self.signalreceiver = signalreceiver
         self.__sequence = []
-        self.dic = dict(start=start, end=end,
-                        Nsteps=Nsteps, SizeSteps=SizeSteps)
+        self.dic = dict(start=start, end=end, Nsteps=Nsteps, SizeSteps=SizeSteps)
         self.updateData(self.dic)
         self.signalreceiver.sig_updateScanListModel.connect(self.updateData)
 
@@ -195,12 +202,12 @@ class ScanListModel(QtCore.QAbstractListModel):
         # self.debug_running()
 
     def updateData(self, dic):
-        if dic['SizeSteps']:
+        if dic["SizeSteps"]:
             self.__sequence = self.Build_Scan_Size(
-                dic['start'], dic['end'], dic['SizeSteps'])
-        elif dic['Nsteps']:
-            self.__sequence = self.Build_Scan_N(
-                dic['start'], dic['end'], dic['Nsteps'])
+                dic["start"], dic["end"], dic["SizeSteps"]
+            )
+        elif dic["Nsteps"]:
+            self.__sequence = self.Build_Scan_N(dic["start"], dic["end"], dic["Nsteps"])
         self.debug_running()
 
     def Build_Scan_N(self, start, end, N):
@@ -343,7 +350,7 @@ class ScanListModel(QtCore.QAbstractListModel):
 # #         self.data = data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("plastique")
@@ -364,11 +371,11 @@ if __name__ == '__main__':
     # listView.setFlow(QtWidgets.QListView.TopToBottom)
     # listView.showDropIndicator()
 
-    first = dict(DisplayText='first', arbdata='arvb')
-    second = dict(DisplayText='second', arbdata='arvb')
-    third = dict(DisplayText='third', arbdata='arvb')
-    fourth = dict(DisplayText='fourth', arbdata='arvb')
-    five = dict(DisplayText='five', arbdata='arvb')
+    first = dict(DisplayText="first", arbdata="arvb")
+    second = dict(DisplayText="second", arbdata="arvb")
+    third = dict(DisplayText="third", arbdata="arvb")
+    fourth = dict(DisplayText="fourth", arbdata="arvb")
+    five = dict(DisplayText="five", arbdata="arvb")
 
     model = SequenceListModel([first, second, third])
     model.addItem(fourth)
