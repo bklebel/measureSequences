@@ -26,7 +26,7 @@ logger.addHandler(logging.NullHandler())
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
-searchf_string = re.compile(r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}''')
+searchf_string = re.compile(r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}|[']{1}(.*?)[']{1}''')
 
 
 # PPMS = 'PPMS'
@@ -54,6 +54,10 @@ def parse_binary(number: int) -> list:
 def parse_strings(string):
     """parse all strings in one line"""
     a = [[y for y in x if y] for x in searchf_string.findall(string)]
+    # second comprehension is to filter for those elements which were found
+    # groups which did not match anything appear as empty strings, which are
+    # not taken into account - only one type of string definition will be used
+    # within one possible match (using | as exclusive OR in the regex pattern)
     for ct, x in enumerate(a):
         try:
             a[ct] = a[ct][0]
