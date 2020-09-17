@@ -64,6 +64,9 @@ class Sequence_runner(object):
 
     def __init__(self, sequence: list, lock=None, isRunning=None, isPaused=None, thresholds_waiting: dict = None, **kwargs) -> None:
         super().__init__(**kwargs)
+        self._logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__
+        )
         self._isRunning = True if isRunning is None else isRunning
         self._isPaused = False if isPaused is None else isPaused
         self.sequence = sequence
@@ -163,8 +166,10 @@ class Sequence_runner(object):
             self.execute_remark(entry['text'])
         if entry['typ'] == 'sequence_message':
             self.execute_sequence_message(**entry)
-        if entry['typ'] == 'exec python':
+        if entry['typ'] == 'exec python multiple':
             self.execute_python(**entry)
+        if entry['typ'] == 'exec python':
+            self.execute_python_single(**entry)
 
         if entry['typ'] == 'scan_T':
             self.execute_scan_T(**entry)
@@ -312,7 +317,7 @@ class Sequence_runner(object):
             self.subrunner = None
 
     @ExceptionHandling
-    def execute_python(self, file: str, **kwargs) -> None:
+    def execute_python_single(self, file: str, **kwargs) -> None:
         """execute python code directly, changable during runtime
 
         DANGEROUS!
@@ -336,6 +341,10 @@ class Sequence_runner(object):
             fc += '\n'
         code = compile(fc, file, 'exec')
         exec(code, globals(), locals())
+
+    @ExceptionHandling
+    def execute_python(self, commands: list, **kwargs) -> None:
+        self.executing_commands(commands)
 
 
     @ExceptionHandling

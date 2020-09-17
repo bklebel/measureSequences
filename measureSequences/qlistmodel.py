@@ -1,4 +1,5 @@
-# from PyQt5 import QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets
+# , QtCore, uic
 import sys
 from copy import deepcopy
 # import numpy as np
@@ -6,6 +7,7 @@ from copy import deepcopy
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore
 # import math
+import logging
 
 from .util import ScanningN
 # needed for the stepsize
@@ -19,6 +21,9 @@ class SequenceListModel(QtCore.QAbstractListModel):
     def __init__(self, sequence=None, parent=None):
         QtCore.QAbstractListModel.__init__(self, parent)
         self.__sequence = [] if sequence is None else sequence
+        self._logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__
+        )
 
         # self.countinserted = 0
         # self.root = Node(dict(DisplayText='specialnode', arbdata='weha'))
@@ -30,14 +35,15 @@ class SequenceListModel(QtCore.QAbstractListModel):
         finally:
             QTimer.singleShot(2 * 1e3, self.debug_running)
 
-    def headerData(self, section, orientation, role):
+    @staticmethod
+    def headerData(section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return "Sequence"
             else:
                 return '{}'.format(section + 1)
 
-    def rowCount(self, parent=QtCore.QModelIndex()):
+    def rowCount(self):
         return len(self.__sequence)
 
     # def columnCount(self, parent):
@@ -61,7 +67,8 @@ class SequenceListModel(QtCore.QAbstractListModel):
     #         return True
     #     return False
 
-    def flags(self, index):
+    @staticmethod
+    def flags(index):
         if not index.isValid():
             return QtCore.Qt.ItemIsEnabled
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable  # | \
@@ -172,6 +179,9 @@ class ScanListModel(QtCore.QAbstractListModel):
 
     def __init__(self, signalreceiver, start=None, end=None, Nsteps=None, SizeSteps=None, **kwargs):
         super().__init__(**kwargs)
+        self._logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__
+        )
 
         self.signalreceiver = signalreceiver
         self.__sequence = []
@@ -239,10 +249,11 @@ class ScanListModel(QtCore.QAbstractListModel):
             return True
         return False
 
-    def rowCount(self, parent=QtCore.QModelIndex()):
+    def rowCount(self):
         return len(self.__sequence)
 
-    def flags(self, index):
+    @staticmethod
+    def flags(index):
         if not index.isValid():
             return QtCore.Qt.ItemIsEnabled
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable  # | \
