@@ -293,7 +293,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
     def __init__(self, parent=None, display_only=False, **kwargs):
         # self.__name__ = 'Sequence_builder'
         self._logger = logging.getLogger(
-            "measureSequences." + __name__ + "." + self.__class__.__name__
+            __name__ + "." + self.__class__.__name__
         )
         self.display_only = display_only
         if display_only:

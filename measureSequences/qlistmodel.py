@@ -21,7 +21,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
         QtCore.QAbstractListModel.__init__(self, parent)
         self.__sequence = [] if sequence is None else sequence
         self._logger = logging.getLogger(
-            "measureSequences." + __name__ + "." + self.__class__.__name__
+            __name__ + "." + self.__class__.__name__
         )
 
         # self.countinserted = 0
@@ -177,7 +177,7 @@ class ScanListModel(QtCore.QAbstractListModel):
     def __init__(self, signalreceiver, start=None, end=None, Nsteps=None, SizeSteps=None, **kwargs):
         super().__init__(**kwargs)
         self._logger = logging.getLogger(
-            "measureSequences." + __name__ + "." + self.__class__.__name__
+            __name__ + "." + self.__class__.__name__
         )
 
         self.signalreceiver = signalreceiver
