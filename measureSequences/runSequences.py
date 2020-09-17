@@ -59,7 +59,7 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> 'type(np.arra
     return mapped
 
 
-class Sequence_runner(object):
+class Sequence_runner():
     """docstring for Sequence_Thread"""
 
     def __init__(self, sequence: list, lock=None, isRunning=None, isPaused=None, thresholds_waiting: dict = None, **kwargs) -> None:
