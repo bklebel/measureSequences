@@ -44,7 +44,7 @@ class SequenceListModel(QtCore.QAbstractListModel):
                 return "Sequence"
             return "{}".format(section + 1)
 
-    def rowCount(self):
+    def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self.__sequence)
 
     # def columnCount(self, parent):
@@ -255,7 +255,7 @@ class ScanListModel(QtCore.QAbstractListModel):
             return True
         return False
 
-    def rowCount(self):
+    def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self.__sequence)
 
     @staticmethod
