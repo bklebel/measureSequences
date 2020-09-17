@@ -405,7 +405,7 @@ class Sequence_runner():
                     t, self.executing_commands, kwargs=dict(commands=commands)))
                 timerlist[-1].start()
 
-            while any([x.isAlive() for x in timerlist]):
+            while any(x.isAlive() for x in timerlist):
                 time.sleep(0.5)
                 try:
                     self.check_running()
@@ -640,7 +640,7 @@ class Sequence_runner():
                 self.message_to_user(f'An error occured: {e}. Something went wrong in the resistivity measuring procedure.')
 
         for key in values_transposed:
-            if any([not isinstance(val, (int, float)) for val in values_transposed[key]]):
+            if any(not isinstance(val, (int, float)) for val in values_transposed[key]):
                 values_merged['non_numeric'][key] = values_transposed[key]
                 continue
             if key not in keys_corrupted:
