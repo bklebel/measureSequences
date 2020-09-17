@@ -33,8 +33,8 @@ from .qlistmodel import ScanListModel
 
 import pkg_resources
 import logging
-logger = logging.getLogger(
-    'measureSequences.Sequence_builder')
+
+logger = logging.getLogger("measureSequences.Sequence_builder")
 logger.addHandler(logging.NullHandler())
 
 
@@ -44,19 +44,25 @@ class Window_ChangeDataFile(QtWidgets.QDialog):
     sig_accept = pyqtSignal(dict)
     sig_reject = pyqtSignal()
 
-    def __init__(self, ui_file=pkg_resources.resource_filename(__name__, '.\\configurations\\Sequence_change_datafile.ui')):
+    def __init__(
+        self,
+        ui_file=pkg_resources.resource_filename(
+            __name__, ".\\configurations\\Sequence_change_datafile.ui"
+        ),
+    ):
         """build ui, build dict, connect to signals"""
         super().__init__()
         loadUi(ui_file, self)
 
-        self.conf = dict(typ='change datafile', new_file_data='',
-                         mode='',
-                         DisplayText='')
-        self.lineFileLocation.setText(self.conf['new_file_data'])
+        self.conf = dict(
+            typ="change datafile", new_file_data="", mode="", DisplayText=""
+        )
+        self.lineFileLocation.setText(self.conf["new_file_data"])
         self.lineFileLocation.textChanged.connect(
-            lambda value: self.setValue('new_file_data', value))
+            lambda value: self.setValue("new_file_data", value)
+        )
         self.pushBrowse.clicked.connect(self.Browse)
-        self.comboMode.activated['int'].connect(self.setMode)
+        self.comboMode.activated["int"].connect(self.setMode)
 
         self.buttonDialog.accepted.connect(self.acc)
         self.buttonDialog.rejected.connect(self.close)
@@ -75,10 +81,11 @@ class Window_ChangeDataFile(QtWidgets.QDialog):
 
     def Browse(self):
         """open File Saving Dialog, to choose the datafile, set datafile in conf dict"""
-        new_file_data, __ = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Datafile',
-                                                                  'c:\\', "Datafiles (*.dat)")
-        self.setValue('new_file_data', new_file_data)
-        self.lineFileLocation.setText(self.conf['new_file_data'])
+        new_file_data, __ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Choose Datafile", "c:\\", "Datafiles (*.dat)"
+        )
+        self.setValue("new_file_data", new_file_data)
+        self.lineFileLocation.setText(self.conf["new_file_data"])
 
     def setMode(self, modeint):
         pass
@@ -90,18 +97,22 @@ class Window_waiting(QtWidgets.QDialog):
     sig_accept = pyqtSignal(dict)
     sig_reject = pyqtSignal()
 
-    def __init__(self, ui_file=pkg_resources.resource_filename(__name__, '.\\configurations\\sequence_waiting.ui')):
+    def __init__(
+        self,
+        ui_file=pkg_resources.resource_filename(
+            __name__, ".\\configurations\\sequence_waiting.ui"
+        ),
+    ):
         """build ui, build dict, connect to signals"""
         super().__init__()
         loadUi(ui_file, self)
 
-        self.conf = dict(typ='Wait', Temp=False, Field=False, Delay=0)
-        self.check_Temp.toggled.connect(
-            lambda value: self.setValue('Temp', value))
-        self.check_Field.toggled.connect(
-            lambda value: self.setValue('Field', value))
+        self.conf = dict(typ="Wait", Temp=False, Field=False, Delay=0)
+        self.check_Temp.toggled.connect(lambda value: self.setValue("Temp", value))
+        self.check_Field.toggled.connect(lambda value: self.setValue("Field", value))
         self.spin_delayseconds.valueChanged.connect(
-            lambda value: self.setValue('Delay', value))
+            lambda value: self.setValue("Delay", value)
+        )
         self.buttonDialog.accepted.connect(self.acc)
         self.buttonDialog.rejected.connect(self.close)
 
@@ -128,7 +139,13 @@ class Window_Tscan(QtWidgets.QDialog):
     sig_reject = pyqtSignal()
     sig_updateScanListModel = pyqtSignal(dict)
 
-    def __init__(self, ui_file=pkg_resources.resource_filename(__name__, "configurations\\sequence_scan_temperature.ui"), **kwargs):
+    def __init__(
+        self,
+        ui_file=pkg_resources.resource_filename(
+            __name__, "configurations\\sequence_scan_temperature.ui"
+        ),
+        **kwargs
+    ):
         super().__init__(**kwargs)
         loadUi(ui_file, self)
 
@@ -139,12 +156,8 @@ class Window_Tscan(QtWidgets.QDialog):
 
         # BUGS BUGS BUGS
 
-        self.conf = dict(typ='scan_T', measuretype='RES')
-        self.__scanconf = dict(
-            start=0,
-            end=0,
-            Nsteps=None,
-            SizeSteps=None)
+        self.conf = dict(typ="scan_T", measuretype="RES")
+        self.__scanconf = dict(start=0, end=0, Nsteps=None, SizeSteps=None)
         self.putin_start = False
         self.putin_end = False
         self.putin_N = False
@@ -159,16 +172,14 @@ class Window_Tscan(QtWidgets.QDialog):
         self.buttonOK.clicked.connect(self.acc)
         self.buttonCANCEL.clicked.connect(self.close)
 
-        self.comboSetTempramp.activated['int'].connect(self.setRampCondition)
+        self.comboSetTempramp.activated["int"].connect(self.setRampCondition)
         self.spinSetRate.valueChanged.connect(self.setSweepRate)
 
         self.spinSetTstart.valueChanged.connect(self.setTstart)
-        self.spinSetTstart.editingFinished.connect(
-            lambda: self.update_list(None, None))
+        self.spinSetTstart.editingFinished.connect(lambda: self.update_list(None, None))
 
         self.spinSetTend.valueChanged.connect(self.setTend)
-        self.spinSetTend.editingFinished.connect(
-            lambda: self.update_list(None, None))
+        self.spinSetTend.editingFinished.connect(lambda: self.update_list(None, None))
 
         # self.spinSetNsteps.valueChanged.connect(lambda value: self.printing('spinSetNsteps: valueChanged: {}'.format(value)))
         # self.spinSetNsteps.editingFinished.connect(lambda: self.printing('spinSetNsteps: editingFinished'))
@@ -176,9 +187,9 @@ class Window_Tscan(QtWidgets.QDialog):
 
         self.spinSetNsteps.valueChanged.connect(self.setN)
         self.spinSetNsteps.editingFinished.connect(
-            lambda: self.setLCDNsteps(self.__scanconf['Nsteps']))
-        self.spinSetNsteps.editingFinished.connect(
-            lambda: self.update_list(1, 0))
+            lambda: self.setLCDNsteps(self.__scanconf["Nsteps"])
+        )
+        self.spinSetNsteps.editingFinished.connect(lambda: self.update_list(1, 0))
         self.model.sig_Nsteps.connect(lambda value: self.setLCDNsteps(value))
         # self.model.sig_Nsteps.connect(self.spinSetNsteps.setValue)
 
@@ -188,11 +199,10 @@ class Window_Tscan(QtWidgets.QDialog):
 
         self.spinSetSizeSteps.valueChanged.connect(self.setSizeSteps)
         self.spinSetSizeSteps.editingFinished.connect(
-            lambda: self.setLCDstepsize(self.__scanconf['SizeSteps']))
-        self.spinSetSizeSteps.editingFinished.connect(
-            lambda: self.update_list(0, 1))
-        self.model.sig_stepsize.connect(
-            lambda value: self.setLCDstepsize(value))
+            lambda: self.setLCDstepsize(self.__scanconf["SizeSteps"])
+        )
+        self.spinSetSizeSteps.editingFinished.connect(lambda: self.update_list(0, 1))
+        self.model.sig_stepsize.connect(lambda value: self.setLCDstepsize(value))
         # self.model.sig_stepsize.connect(self.spinSetSizeSteps.setValue)
 
     def update_list(self, Nsteps, SizeSteps):
@@ -203,46 +213,46 @@ class Window_Tscan(QtWidgets.QDialog):
         if Nsteps:
             # self.__scanconf['Nsteps'] = Nsteps
             with self.dictlock:
-                self.__scanconf['SizeSteps'] = None
+                self.__scanconf["SizeSteps"] = None
 
         if SizeSteps:
             with self.dictlock:
-                self.__scanconf['Nsteps'] = None
+                self.__scanconf["Nsteps"] = None
             # self.__scanconf['SizeSteps'] = None
         # print(self.__scanconf)
         self.sig_updateScanListModel.emit(deepcopy(self.__scanconf))
 
     def setTstart(self, Tstart):
         with self.dictlock:
-            self.__scanconf['start'] = Tstart
+            self.__scanconf["start"] = Tstart
         self.putin_start = True
         self.conf.update(self.__scanconf)
 
     def setTend(self, Tend):
         with self.dictlock:
-            self.__scanconf['end'] = Tend
+            self.__scanconf["end"] = Tend
         self.putin_end = True
         self.conf.update(self.__scanconf)
 
     def setN(self, N):
         with self.dictlock:
-            self.__scanconf['Nsteps'] = N
+            self.__scanconf["Nsteps"] = N
         # self.putin_N = True
         self.conf.update(self.__scanconf)
 
     def setSizeSteps(self, stepsize):
         with self.dictlock:
-            self.__scanconf['SizeSteps'] = stepsize
+            self.__scanconf["SizeSteps"] = stepsize
         # self.putin_Size = True
         self.conf.update(self.__scanconf)
 
     def setLCDstepsize(self, value):
         self._LCD_stepsize = value
-        self.__scanconf['SizeSteps'] = value
+        self.__scanconf["SizeSteps"] = value
 
     def setLCDNsteps(self, value):
         self._LCD_Nsteps = value
-        self.__scanconf['Nsteps'] = value
+        self.__scanconf["Nsteps"] = value
 
     @staticmethod
     def printing(message):
@@ -250,7 +260,7 @@ class Window_Tscan(QtWidgets.QDialog):
 
     def setRampCondition(self, value):
         with self.dictlock:
-            self.conf['RampCondition'] = value
+            self.conf["RampCondition"] = value
             # 0 == Stabilize
             # 1 == Sweep
             # CHECK THIS
@@ -262,7 +272,7 @@ class Window_Tscan(QtWidgets.QDialog):
 
     def setSweepRate(self, value):
         with self.dictlock:
-            self.conf['SweepRate'] = value
+            self.conf["SweepRate"] = value
 
     def update_lcds(self):
         try:
@@ -275,7 +285,7 @@ class Window_Tscan(QtWidgets.QDialog):
     def acc(self):
         """if not rejected, emit signal with configuration and accept"""
 
-        self.conf['sequence_temperature'] = self.model.pass_data()
+        self.conf["sequence_temperature"] = self.model.pass_data()
 
         self.sig_accept.emit(deepcopy(self.conf))
         self.accept()
@@ -292,18 +302,17 @@ class Sequence_builder(Window_ui, Sequence_parser):
 
     def __init__(self, display_only=False, **kwargs):
         # self.__name__ = 'Sequence_builder'
-        self._logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__
-        )
+        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
         self.display_only = display_only
         if display_only:
             ui_file = pkg_resources.resource_filename(
-                __name__, "configurations\\sequence_observer.ui")
+                __name__, "configurations\\sequence_observer.ui"
+            )
         else:
             ui_file = pkg_resources.resource_filename(
-                __name__, "configurations\\sequence.ui")
-        super().__init__(
-            ui_file=ui_file, **kwargs)
+                __name__, "configurations\\sequence.ui"
+            )
+        super().__init__(ui_file=ui_file, **kwargs)
 
         # self.listSequence.sig_dropped.connect(lambda value: self.dropreact(value))
 
@@ -313,14 +322,16 @@ class Sequence_builder(Window_ui, Sequence_parser):
         if not display_only:
             QTimer.singleShot(0, self.initialize_all_windows)
 
-            self.treeOptions.itemDoubleClicked[
-                'QTreeWidgetItem*', 'int'].connect(lambda value: self.addItem_toSequence(value))
+            self.treeOptions.itemDoubleClicked["QTreeWidgetItem*", "int"].connect(
+                lambda value: self.addItem_toSequence(value)
+            )
             self.pushSaving.clicked.connect(self.saving)
             self.pushBrowse.clicked.connect(self.window_FileDialogSave)
             self.pushOpen.clicked.connect(self.window_FileDialogOpen)
             self.lineFileLocation.setText(self.sequence_file)
             self.lineFileLocation.textChanged.connect(
-                lambda value: self.change_file_location(value))
+                lambda value: self.change_file_location(value)
+            )
             self.pushClear.clicked.connect(self.init_data)
 
             self.Button_RunSequence.clicked.connect(self.running_sequence)
@@ -328,7 +339,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
 
     def init_data(self):
         self.model.clear_all()
-        self.initialize_sequence('')
+        self.initialize_sequence("")
         self.sig_clearedSequence.emit()
 
     @ExceptionHandling
@@ -416,34 +427,35 @@ class Sequence_builder(Window_ui, Sequence_parser):
 
     def initialise_window_waiting(self):
         self.window_waiting = Window_waiting()
-        self.window_waiting.sig_accept.connect(
-            lambda value: self.addWaiting(value))
+        self.window_waiting.sig_accept.connect(lambda value: self.addWaiting(value))
 
     def initialise_window_Tscan(self):
         self.window_Tscan = Window_Tscan()
-        self.window_Tscan.sig_accept.connect(
-            lambda value: self.addTscan(value))
+        self.window_Tscan.sig_accept.connect(lambda value: self.addTscan(value))
 
     def initialise_window_ChangeDataFile(self):
         self.Window_ChangeDataFile = Window_ChangeDataFile()
         self.Window_ChangeDataFile.sig_accept.connect(
-            lambda value: self.addChangeDataFile(value))
+            lambda value: self.addChangeDataFile(value)
+        )
 
     # @ExceptionHandling
     @pyqtSlot()
     def window_FileDialogSave(self):
-        self.sequence_file_json, __ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As',
-                                                                            'c:\\', "Serialised (*.json)")
+        self.sequence_file_json, __ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save As", "c:\\", "Serialised (*.json)"
+        )
         # last option is a file specifier, like 'Sequence Files (*.seq)'
         if not self.display_only:
             self.lineFileLocation_serialised.setText(self.sequence_file_json)
-        self.sequence_file_p = self.sequence_file_json[:-4] + 'pkl'
+        self.sequence_file_p = self.sequence_file_json[:-4] + "pkl"
 
     # @ExceptionHandling
     @pyqtSlot()
     def window_FileDialogOpen(self):
-        sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(self, 'Save As',
-                                                                  'c:\\', "Sequence files (*.seq)")
+        sequence_file, __ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Save As", "c:\\", "Sequence files (*.seq)"
+        )
         if sequence_file:
             # print(sequence_file)
             self.init_data()
@@ -456,7 +468,7 @@ class Sequence_builder(Window_ui, Sequence_parser):
     @ExceptionHandling
     def initialize_sequence(self, sequence_file):
         """build & run the sequence parsing, add items to the display model"""
-        logger.debug('initialising/parsing sequence: {}'.format(sequence_file))
+        logger.debug("initialising/parsing sequence: {}".format(sequence_file))
         super().initialize_sequence(sequence_file)
         for command in self.textsequence:
             self.model.addItem(command)
@@ -464,10 +476,10 @@ class Sequence_builder(Window_ui, Sequence_parser):
             self.sig_readSequence.emit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    file = 'SEQ_20180914_Tscans.seq'
-    file = 'Tempscan.seq'
+    file = "SEQ_20180914_Tscans.seq"
+    file = "Tempscan.seq"
     file = None
     # file = 't.seq'
 
