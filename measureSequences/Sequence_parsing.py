@@ -26,7 +26,8 @@ logger.addHandler(logging.NullHandler())
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
-searchf_string = re.compile(r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}''')
+searchf_string = re.compile(
+    r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}|[']{1}(.*?)[']{1}''')
 
 
 # PPMS = 'PPMS'
@@ -47,13 +48,17 @@ def parse_binary(number: int) -> list:
     nums = list(reversed('{:b}'.format(number)))
     # print(nums)
     for ct, num in enumerate(nums):
-        nums[ct] = True if int(num) else False
+        nums[ct] = bool(int(num))
     return nums
 
 
 def parse_strings(string):
     """parse all strings in one line"""
     a = [[y for y in x if y] for x in searchf_string.findall(string)]
+    # second comprehension is to filter for those elements which were found
+    # groups which did not match anything appear as empty strings, which are
+    # not taken into account - only one type of string definition will be used
+    # within one possible match (using | as exclusive OR in the regex pattern)
     for ct, _ in enumerate(a):
         try:
             a[ct] = a[ct][0]
@@ -62,12 +67,15 @@ def parse_strings(string):
     return a
 
 
-class Sequence_parser(object):
+class Sequence_parser():
     """Abstract Sequence parser, without GUI"""
 
     def __init__(self, sequence_file: str = None, textnesting: str = '   ', **kwargs):
         """initialise important attributes"""
         super(Sequence_parser, self).__init__(**kwargs)
+        self._logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__
+        )
 
         self.sequence_file = sequence_file
         self.textnesting = textnesting
@@ -102,7 +110,7 @@ class Sequence_parser(object):
                    r'WAITFOR(.*?)$', r'CHN(.*?)$', r'CDF(.*?)$', r'DFC(.*?)$',
                    r'LPI(.*?)$', r'SHT(.*?)DOWN', r'EN(.*?)EOS$', r'RES(.*?)$',
                    r'BEP BEEP(.*?)$', r'CMB CHAMBER(.*?)$', r'REM(.*?)$',
-                   r'MVP MOVE(.*?)$', r'MES(.*?)$', r'PHY(.*?)$',
+                   r'MVP MOVE(.*?)$', r'MES(.*?)$',
                    ]
             self.p = re.compile(self.construct_pattern(
                 exp), re.DOTALL | re.M)  # '(.*?)[^\S]* EOS'
@@ -390,11 +398,25 @@ class Sequence_parser(object):
         """generate the displaytext for the sequence message"""
         return 'SeqMes {timeout_waiting_min}min, {message_type}, {message_direct}, Email To {email_receiver}, {email_cc}, {email_subject}, {email_message}, attachements: {email_attachement_path}'.format(**data)
 
+    def parse_python_exec(self, file: str) -> dict:
+        """parse command to execute python script file -- EXTERNAL !"""
+        return dict(typ='exec python', file=file,
+                    DisplayText=self.textnesting * (self.nesting_level + 1) +
+                    'Exec: {}'.format(file))
+
     def parse_remark(self, comm: str) -> dict:
         """parse a remark
 
         This could be overwritten in case the remarks have a special structure
         which could be designed for a certain instrument/measurement"""
+        text = comm.strip()
+        if text.startswith('python'):
+            files = parse_strings(comm)
+            return dict(typ='exec python multiple',
+                        DisplayText=self.textnesting * self.nesting_level +
+                        'Execute python scripts:',
+                        commands=[self.parse_python_exec(f) for f in files])
+
         return dict(typ='remark',
                     text=comm.strip(),
                     DisplayText=self.textnesting * self.nesting_level + comm)
@@ -495,13 +517,6 @@ class Sequence_parser(object):
         return dict(typ='chain sequence', new_file_seq=file,
                     DisplayText=self.textnesting * self.nesting_level + 'Chain sequence: {}'.format(comm))
 
-    def parse_python_exec(self, comm: str) -> dict:
-        """parse command to execute python script file -- EXTERNAL !"""
-        file = comm[4:].strip().strip(""" '" """)
-        return dict(typ='exec python', file=file,
-                    DisplayText=self.textnesting * self.nesting_level +
-                    'Execute python script: {}'.format(file))
-
     def parse_scan_T(self, comm: str) -> dict:
         """parse a command to do a temperature scan"""
         temps = self.read_nums(comm)
@@ -590,7 +605,8 @@ class Sequence_parser(object):
             dic['SpacingCode'] = 'ln(t)'
 
         dic['DisplayText'] = self.textnesting * self.nesting_level + \
-            'Scan Time {time_total}secs in {Nsteps} steps, {SpacingCode}'.format(**dic)
+            'Scan Time {time_total}secs in {Nsteps} steps, {SpacingCode}'.format(
+                **dic)
         return dic
 
     def parse_scan_P(self, comm: str) -> dict:
@@ -664,7 +680,7 @@ class Sequence_parser(object):
             bridge_conf[ct] = dict(limit_power_uW=channel[2],
                                    limit_current_uA=channel[1],
                                    limit_voltage_mV=channel[5])
-            bridge_conf[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_conf[ct]['on_off'] = bool(channel[0] == 2)
             bridge_conf[ct]['ac_dc'] = 'AC' if channel[3] == 0 else 'DC'
             bridge_conf[ct]['calibration_mode'] = 'Standard' if channel[
                 4] == 0 else 'Fast'
@@ -749,7 +765,7 @@ class Sequence_parser(object):
             bridge_setup[ct] = dict(limit_power_uW=channel[1],
                                     limit_voltage_mV=channel[4])
             bridge_setup[ct]['ac_dc'] = 'AC' if channel[2] == 0 else 'DC'
-            bridge_setup[ct]['on_off'] = True if channel[0] == 2 else False
+            bridge_setup[ct]['on_off'] = bool(channel[0] == 2)
             bridge_setup[ct]['calibration_mode'] = 'Standard' if channel[
                 3] == 0 else 'Fast'
         return bridge_setup

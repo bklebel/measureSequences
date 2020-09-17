@@ -290,8 +290,11 @@ class Sequence_builder(Window_ui, Sequence_parser):
     sig_readSequence = pyqtSignal()
     sig_clearedSequence = pyqtSignal()
 
-    def __init__(self, parent=None, display_only=False, **kwargs):
-        self.__name__ = 'Sequence_builder'
+    def __init__(self, display_only=False, **kwargs):
+        # self.__name__ = 'Sequence_builder'
+        self._logger = logging.getLogger(
+            __name__ + "." + self.__class__.__name__
+        )
         self.display_only = display_only
         if display_only:
             ui_file = pkg_resources.resource_filename(
