@@ -610,9 +610,9 @@ class Sequence_runner(object):
         """execute the resistivity: measure command"""
 
         values_measured = []
-        values_transposed = dict()
-        values_merged = dict(non_numeric=dict(), mean=dict(),
-                             median=dict(), stddev=dict())
+        values_transposed = {}
+        values_merged = dict(non_numeric={}, mean={},
+                             median={}, stddev={})
 
         reading_count = int(reading_count)
         # print(reading_count)
