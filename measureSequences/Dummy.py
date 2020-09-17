@@ -11,7 +11,7 @@ from .runSequences import Sequence_runner
 from .Sequence_parsing import Sequence_parser
 
 
-class Dummy_Functions(object):
+class Dummy_Functions():
     """docstring for Functions"""
 
     def __init__(self):

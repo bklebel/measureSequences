@@ -67,7 +67,7 @@ def parse_strings(string):
     return a
 
 
-class Sequence_parser(object):
+class Sequence_parser():
     """Abstract Sequence parser, without GUI"""
 
     def __init__(self, sequence_file: str = None, textnesting: str = '   ', **kwargs):
