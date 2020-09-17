@@ -26,7 +26,8 @@ logger.addHandler(logging.NullHandler())
 
 dropstring = re.compile(r'([a-zA-Z0-9])')
 searchf_number = re.compile(r'([0-9]+[.]*[0-9]*)')
-searchf_string = re.compile(r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}|[']{1}(.*?)[']{1}''')
+searchf_string = re.compile(
+    r'''["]{1}(.*?)["]{1}|[']{2}(.*?)[']{2}|[']{1}(.*?)[']{1}''')
 
 
 # PPMS = 'PPMS'
@@ -409,9 +410,9 @@ class Sequence_parser(object):
         if text.startswith('python'):
             files = parse_strings(comm)
             return dict(typ='exec python multiple',
-                          DisplayText=self.textnesting * self.nesting_level +
-                          'Execute python scripts:',
-                          commands=[self.parse_python_exec(f) for f in files])
+                        DisplayText=self.textnesting * self.nesting_level +
+                        'Execute python scripts:',
+                        commands=[self.parse_python_exec(f) for f in files])
 
         else:
             return dict(typ='remark',
