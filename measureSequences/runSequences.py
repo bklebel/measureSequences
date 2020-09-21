@@ -361,7 +361,7 @@ class Sequence_runner:
             except SyntaxError:
                 enc = "utf-8"
 
-        with open(file, "r", encoding=enc) as f:
+        with open(self.python_default_path + file, "r", encoding=enc) as f:
             fc = f.read()
         if not fc.endswith("\n"):
             fc += "\n"
