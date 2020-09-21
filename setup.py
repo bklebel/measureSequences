@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="measureSequences",
-    version="0.1.7",
+    version="0.1.9",
     author="Benjamin Klebel",
     author_email="klebel.b@hotmail.com",
     description="parse and run QD PPMS sequence files",
