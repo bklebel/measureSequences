@@ -71,6 +71,7 @@ class Sequence_runner:
         isRunning=None,
         isPaused=None,
         thresholds_waiting: dict = None,
+        python_default_path: str = '',
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -91,6 +92,7 @@ class Sequence_runner:
 
         self.datafile = ""
         self.scan_time_force = False
+        self.python_default_path = python_default_path
 
     def running(self) -> str:
         """run the given sequence"""
@@ -353,7 +355,7 @@ class Sequence_runner:
         using globals() and locals(), the python script is in the Namespace of
         'right here', in this function.
         checks file for encoding"""
-        with open(file, "rb") as fe:
+        with open(self.python_default_path + file, "rb") as fe:
             try:
                 enc = detect_encoding(fe.readline)[0]
             except SyntaxError:
