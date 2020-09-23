@@ -1008,20 +1008,20 @@ class Sequence_runner:
     def checkPosition(
         self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
     ) -> bool:
-        """check whether the Field has passed a certain value
+        """check whether the Position has passed a certain value
 
         param: position:
-            the field which needs to be arrived to continue
-            function must block until the field has reached this value!
+            the position which needs to be arrived to continue
+            function must block until the position has reached this value!
             (apart from checking whether the sequence qas aborted)
 
         param: direction:
-            indicates whether the 'Field' should currently be
+            indicates whether the 'Position' should currently be
                 rising or fallin
                     @ExceptionHandlingg
                 direction =  0: default, no information / non-sweeping
-                direction =  1: temperature should be rising
-                direction = -1: temperature should be falling
+                direction =  1: position value should be rising
+                direction = -1: position value should be falling
 
         param: ApproachMode:
             specifies the mode of approach in the scan this function is called
