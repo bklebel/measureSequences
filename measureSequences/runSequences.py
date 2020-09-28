@@ -71,7 +71,7 @@ class Sequence_runner:
         isRunning=None,
         isPaused=None,
         thresholds_waiting: dict = None,
-        python_default_path: str = '',
+        python_default_path: str = "",
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
