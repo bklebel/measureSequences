@@ -625,7 +625,7 @@ class Sequence_runner:
             for pos in positions:
                 self.setPosition(position=pos, speedindex=speedindex)
                 self.wait_for(
-                    target=self._setpoint_pos,
+                    target=pos,
                     getfunc=self.getPosition,
                     threshold=self.thresholds_waiting["Position"],
                 )
@@ -916,9 +916,9 @@ class Sequence_runner:
         needs to be implemented.
         TODO: override method
         """
-        self._setpoint_pos = position
-        super().setPosition(position=position, speedindex=speedindex)
-        # raise NotImplementedError
+        # self._setpoint_pos = position
+        # super().setPosition(position=position, speedindex=speedindex)
+        raise NotImplementedError
 
     @ExceptionHandling
     def getPosition(self) -> float:
