@@ -648,7 +648,7 @@ class Sequence_runner:
 
     @ExceptionHandling
     def execute_set_Temperature(
-        self, Temp: float, ApproachMode: str, SweepRate: float = None, **kwargs
+        self, Temp: float, ApproachMode: str, SweepRate: float, **kwargs
     ) -> None:
         """execute the set temperature command
 
@@ -658,18 +658,20 @@ class Sequence_runner:
         Nsteps in the SweepRate mode is set to 2, implying
             the current temperature to be step 1 of 2
 
-        TODO: include ApproachModes
         """
-        if SweepRate:
-            self.scan_T_programSweep(
+        if ApproachMode == "Fast":
+            self.setTemperature(temperature=Temp)
+        elif ApproachMode == "No O'Shoot":
+            self.execute_scan_T(
                 start=self.getTemperature(),
                 end=Temp,
                 Nsteps=2,
-                temperatures=None,
                 SweepRate=SweepRate,
+                SpacingCode="uniform",
+                ApproachMode="No O'Shoot",
+                commands=[],
+                temperatures_forced=None,
             )
-        else:
-            self.setTemperature(temperature=Temp)
 
     @ExceptionHandling
     def execute_set_Field(
