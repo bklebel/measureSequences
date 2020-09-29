@@ -249,11 +249,12 @@ class Sequence_runner:
         returns: None
         """
         if Temp:
-            self.wait_for(
-                target=self._setpoint_temp,
-                getfunc=self.getTemperature,
-                threshold=self.thresholds_waiting["Temp"],
-            )
+            self.checkStable_Temp(temp=self._setpoint_temp, direction=0, ApproachMode="Fast")
+            # self.wait_for(
+            #     target=self._setpoint_temp,
+            #     getfunc=self.getTemperature,
+            #     threshold=self.thresholds_waiting["Temp"],
+            # )
         if Field:
             self.wait_for(
                 target=self._setpoint_field,
@@ -309,6 +310,9 @@ class Sequence_runner:
         given the respective threshold, return once it has
         produce a possibility to abort the sequence, through
         repeated check for value, for breaking condition, and sleeping
+
+        quite general check, more specific checks are advised, and might
+        be introduced at a later time
         """
         value_now = getfunc()
 
