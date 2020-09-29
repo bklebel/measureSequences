@@ -39,8 +39,12 @@ logger.addHandler(logging.NullHandler())
 
 def ExceptionSignal(thread, func, e_type, err):
     """Emit assertion-signal with relevant information"""
+    try:
+        errmessage = err.args[0]
+    except IndexError:
+        errmessage = "no message given"
     string = "{}: {}: {}: {}".format(
-        thread.__class__.__name__, func.__name__, e_type, err.args[0]
+        thread.__class__.__name__, func.__name__, e_type, errmessage
     )
     return string
 
