@@ -808,7 +808,9 @@ class Sequence_runner(
         default is printing to the command line
         may be overriden!
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def scan_T_programSweep(
         self,
@@ -824,7 +826,9 @@ class Sequence_runner(
         here, the devices should be programmed to start
         the respective Sweep of temperatures
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def scan_H_programSweep(
         self,
@@ -841,7 +845,9 @@ class Sequence_runner(
         here, the devices should be programmed to start
         the respective Sweep for field values
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def scan_P_programSweep(
         self,
@@ -857,7 +863,9 @@ class Sequence_runner(
         here, the devices should be programmed to start
         the respective Sweep of positions
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _setField(self, field: float, EndMode: str = None) -> None:
         if EndMode is None:
@@ -871,7 +879,9 @@ class Sequence_runner(
         here, all logic which is needed to go to a certain field directly
         needs to be implemented.
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _setFieldEndMode(self, EndMode: str) -> bool:
 
@@ -883,7 +893,9 @@ class Sequence_runner(
         """Method to be overridden by a child class
         return bool stating success or failure (optional)
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _setTemperature(self, temperature: float) -> None:
         self._setpoint_temp = temperature
@@ -897,7 +909,9 @@ class Sequence_runner(
         certain temperature directly
         needs to be implemented.
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def getTemperature(self) -> float:
         """Read the temperature
@@ -906,7 +920,9 @@ class Sequence_runner(
         implement measuring the temperature used for control
         returns: temperature as a float
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _setPosition(self, position: float, speedindex: int) -> None:
         self._setpoint_pos = position
@@ -919,7 +935,9 @@ class Sequence_runner(
         certain position directly
         needs to be implemented.
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def getPosition(self) -> float:
         """
@@ -928,7 +946,9 @@ class Sequence_runner(
 
         returns: position as a float
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def getField(self) -> float:
         """Read the Field
@@ -937,7 +957,9 @@ class Sequence_runner(
         implement measuring the field
         returns: Field as a float
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def getChamber(self):
         """Read the Chamber status
@@ -946,7 +968,9 @@ class Sequence_runner(
         implement measuring whether the chamber is ready
         returns: chamber status
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def checkStable_Temp(
         self, temp: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -971,7 +995,9 @@ class Sequence_runner(
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def checkField(
         self, field: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -996,7 +1022,9 @@ class Sequence_runner(
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def checkPosition(
         self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -1021,11 +1049,15 @@ class Sequence_runner(
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def Shutdown(self) -> None:
         """Shut down instruments to a safe standby-configuration"""
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _chamber_purge(self) -> bool:
         """purge the chamber
@@ -1036,7 +1068,9 @@ class Sequence_runner(
         super().chamber_purge()
 
     def chamber_purge(self) -> bool:
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def chamber_vent(self) -> bool:
         """vent the chamber
@@ -1047,7 +1081,9 @@ class Sequence_runner(
         super().chamber_vent()
 
     def _chamber_vent(self) -> bool:
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _chamber_seal(self) -> bool:
         """seal the chamber
@@ -1058,7 +1094,9 @@ class Sequence_runner(
         super().chamber_seal()
 
     def chamber_seal(self) -> bool:
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _chamber_continuous(self, action) -> bool:
         """pump or vent the chamber continuously
@@ -1077,7 +1115,9 @@ class Sequence_runner(
             super().chamber_continuous(action=action)
 
     def chamber_continuous(self, action) -> bool:
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def _chamber_high_vacuum(self) -> bool:
         """pump the chamber to high vacuum
@@ -1089,7 +1129,9 @@ class Sequence_runner(
         super().chamber_high_vacuum()
 
     def chamber_high_vacuum(self) -> bool:
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
         """Measure resistivity
@@ -1097,19 +1139,25 @@ class Sequence_runner(
         return dict with all data according to the set dataflags
         this dict should be flat, just numbers, no nesting
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
         Must be overridden!
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def res_datafilecomment(self, comment: str, datafile: str) -> None:
         """write a comment to the datafile
         Must be overridden!
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
 
     def res_change_datafile(self, datafile: str, mode: str) -> None:
         """write a comment to the datafile
@@ -1119,4 +1167,6 @@ class Sequence_runner(
             'w': written over
         (to) the new datafile
         """
-        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+        raise NotImplementedError(
+            "To use this function, it needs to be manually implemented!"
+        )
