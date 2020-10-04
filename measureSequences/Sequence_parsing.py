@@ -153,7 +153,7 @@ class Sequence_parser:
             textsequence = []
         else:
             textsequence = None
-        for ct, line_further in enumerate(lines_file[lines_index + 1 :]):
+        for ct, line_further in enumerate(lines_file[lines_index + 1:]):
             if self.jumping_count[self.nesting_level + 1] > 0:
                 self.jumping_count[self.nesting_level + 1] -= 1
                 continue

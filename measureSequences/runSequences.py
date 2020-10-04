@@ -100,6 +100,15 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         self.scan_time_force = False
         self.python_default_path = python_default_path
 
+        # runtime attributes:
+        self._setpoint_temp = None
+        self._setpoint_field = None
+        self._setpoint_pos = None
+        self._setpoint_field_EndMode = None
+        self._setpoint_chamber = None
+
+
+
     def running(self) -> str:
         """run the given sequence"""
 
@@ -397,7 +406,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
             times = mapping_tofunc(lambda x: x, 0, time_total, Nsteps)
 
         elif SpacingCode == "ln(t)":
-            times = mapping_tofunc(lambda x: np.log(x), 0, time_total, Nsteps)
+            times = mapping_tofunc(np.log, 0, time_total, Nsteps)
 
         if np.isclose(time_total, 0):
             while self._isRunning:
@@ -461,10 +470,10 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
             fields = mapping_tofunc(lambda x: x, start, end, Nsteps)
 
         elif SpacingCode == "H*H":
-            fields = mapping_tofunc(lambda x: np.square(x), start, end, Nsteps)
+            fields = mapping_tofunc(np.square, start, end, Nsteps)
 
         elif SpacingCode == "logH":
-            fields = mapping_tofunc(lambda x: np.log(x), start, end, Nsteps)
+            fields = mapping_tofunc(np.log, start, end, Nsteps)
 
         elif SpacingCode == "1/H":
             fields = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
@@ -482,7 +491,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
             for ct, field in enumerate(fields):
                 first = fields[0] if ct == 0 else fields[ct - 1]
                 approachFields = mapping_tofunc(
-                    lambda x: np.log(x), start=first, end=field, Nsteps=10
+                    np.log, start=first, end=field, Nsteps=10
                 )
                 for t in approachFields:
                     self.setField(field=t, EndMode="driven")
@@ -544,7 +553,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
                 temperatures = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
 
             elif SpacingCode == "logT":
-                temperatures = mapping_tofunc(lambda x: np.log(x), start, end, Nsteps)
+                temperatures = mapping_tofunc(np.log, start, end, Nsteps)
 
         # scanning through the temperatures:
 
@@ -552,7 +561,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         if ApproachMode == "No O'Shoot":
             for temp in temperatures:
                 approachTemps = mapping_tofunc(
-                    lambda x: np.log(x), start=temperatures[0], end=temp, Nsteps=10
+                    np.log, start=temperatures[0], end=temp, Nsteps=10
                 )
                 for t in approachTemps:
                     self.setTemperature(t)
@@ -682,20 +691,19 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         Nsteps in the SweepRate mode is set to 2, implying
             the current field to be step 1 of 2
-
-        TODO: include ApproachModes
         """
-        if SweepRate:
-            self.scan_H_programSweep(
+        if ApproachMode == "Fast":
+            self.setField(field=Field, EndMode=EndMode)
+        elif ApproachMode == "No O'Shoot":
+            self.execute_scan_H(
                 start=self.getField(),
                 end=Field,
                 Nsteps=2,
                 fields=None,
                 SweepRate=SweepRate,
                 EndMode=EndMode,
+                ApproachMode=ApproachMode,
             )
-        else:
-            self.setField(field=Field, EndMode=EndMode)
 
     def execute_set_Position(
         self, position: float, speedindex: int, Mode: str, **kwargs
@@ -788,8 +796,11 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         the sequence should continue to run after the message was cleared,
         or the timeout_waiting_min time in minutes has passed
-        should be overridden for advanced options!"""
+        should be overridden for advanced options!
+        """
         self.message_to_user(f"sequence message: {message_type}: {message_direct}")
+        # skipcq: PYL-W0235
+        super().execute_sequence_message(timeout_waiting_min=timeout_waiting_min, message_direct=message_direct, email_receiver=email_receiver, email_subject=email_subject, email_cc=email_cc, email_message=email_message, email_attachement_path=email_attachement_path, message_type=message_type)
 
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
@@ -797,6 +808,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
             default is printing to the command line
             may be overriden!
         """
+        # skipcq: PYL-W0235
         super().message_to_user(message)
 
     def scan_T_programSweep(
@@ -813,6 +825,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         here, the devices should be programmed to start
         the respective Sweep of temperatures
         """
+        # skipcq: PYL-W0235
         super().scan_T_programSweep(start=start, end=end, Nsteps=Nsteps, temperatures=temperatures, SweepRate=SweepRate, SpacingCode=SpacingCode)
 
     def scan_H_programSweep(
@@ -830,6 +843,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         here, the devices should be programmed to start
         the respective Sweep for field values
         """
+        # skipcq: PYL-W0235
         super().scan_H_programSweep(start=start, end=end, Nsteps=Nsteps, fields=fields, SweepRate=SweepRate, EndMode=EndMode, SpacingCode=SpacingCode)
 
     def scan_P_programSweep(
@@ -846,6 +860,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         here, the devices should be programmed to start
         the respective Sweep of positions
         """
+        # skipcq: PYL-W0235
         super().scan_P_programSweep(start=start, end=end, Nsteps=Nsteps, positions=positions, speedindex=speedindex, SpacingCode=SpacingCode)
 
     def setField(self, field: float, EndMode: str = None) -> None:
@@ -857,6 +872,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         if EndMode is None:
             EndMode = self._setpoint_field_EndMode
         self._setpoint_field = field
+        # skipcq: PYL-W0235
         super().setField(field=field, EndMode=EndMode)
 
     def setFieldEndMode(self, EndMode: str) -> bool:
@@ -864,6 +880,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         return bool stating success or failure (optional)
         """
         self._setpoint_field_EndMode = EndMode
+        # skipcq: PYL-W0235
         super().setFieldEndMode(EndMode=EndMode)
 
     def setTemperature(self, temperature: float) -> None:
@@ -874,6 +891,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         needs to be implemented.
         """
         self._setpoint_temp = temperature
+        # skipcq: PYL-W0235
         super().setTemperature(temperature=temperature)
 
     def getTemperature(self) -> float:
@@ -883,7 +901,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         implement measuring the temperature used for control
         returns: temperature as a float
         """
-        return super.getTemperature()
+        # skipcq: PYL-W0235
+        return super().getTemperature()
 
     def setPosition(self, position: float, speedindex: int) -> None:
         """
@@ -893,6 +912,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         needs to be implemented.
         """
         self._setpoint_pos = position
+        # skipcq: PYL-W0235
         super().setPosition(position=position, speedindex=speedindex)
 
     def getPosition(self) -> float:
@@ -902,6 +922,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         returns: position as a float
         """
+        # skipcq: PYL-W0235
         return super().getPosition()
 
     def getField(self) -> float:
@@ -911,6 +932,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         implement measuring the field
         returns: Field as a float
         """
+        # skipcq: PYL-W0235
         return super().getField()
 
     def getChamber(self):
@@ -920,6 +942,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         implement measuring whether the chamber is ready
         returns: chamber status
         """
+        # skipcq: PYL-W0235
         return super().getChamber()
 
     def checkStable_Temp(
@@ -945,6 +968,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
+        # skipcq: PYL-W0235
         return super().checkStable_Temp(temp=temp, direction=direction, ApproachMode=ApproachMode)
 
     def checkField(
@@ -970,6 +994,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
+        # skipcq: PYL-W0235
         return super().checkField(field=field, direction=direction, ApproachMode=ApproachMode)
 
     def checkPosition(
@@ -995,10 +1020,12 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
+        # skipcq: PYL-W0235
         return super().checkPosition(position=position, direction=direction, ApproachMode=ApproachMode)
 
     def Shutdown(self) -> None:
         """Shut down instruments to a safe standby-configuration"""
+        # skipcq: PYL-W0235
         super().Shutdown()
 
     def chamber_purge(self) -> bool:
@@ -1006,6 +1033,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         must block until the chamber is purged
         """
+        self._setpoint_chamber = "purged"
+        # skipcq: PYL-W0235
         super().chamber_purge()
 
     def chamber_vent(self) -> bool:
@@ -1013,6 +1042,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         must block until the chamber is vented
         """
+        self._setpoint_chamber = "vented"
+        # skipcq: PYL-W0235
         super().chamber_vent()
 
     def chamber_seal(self) -> bool:
@@ -1020,6 +1051,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         must block until the chamber is sealed
         """
+        self._setpoint_chamber = "sealed"
+        # skipcq: PYL-W0235
         super().chamber_seal()
 
     def chamber_continuous(self, action) -> bool:
@@ -1030,8 +1063,12 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         """
         if action == "pumping":
+            self._setpoint_chamber = "continuous pumping"
+            # skipcq: PYL-W0235
             super().chamber_continuous(action=action)
         if action == "venting":
+            self._setpoint_chamber = "continuous venting"
+            # skipcq: PYL-W0235
             super().chamber_continuous(action=action)
 
     def chamber_high_vacuum(self) -> bool:
@@ -1039,6 +1076,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         must block until the chamber is  at high vacuum
         """
+        self._setpoint_chamber = "high-vacuum"
+        # skipcq: PYL-W0235
         super().chamber_high_vacuum()
 
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
@@ -1047,18 +1086,21 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         return dict with all data according to the set dataflags
         this dict should be flat, just numbers, no nesting
         """
+        # skipcq: PYL-W0235
         super().res_measure(dataflags=dataflags, bridge_conf=bridge_conf)
 
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
         Must be overridden!
         """
+        # skipcq: PYL-W0235
         super().measuring_store_data(data=data, datafile=datafile)
 
     def res_datafilecomment(self, comment: str, datafile: str) -> None:
         """write a comment to the datafile
         Must be overridden!
         """
+        # skipcq: PYL-W0235
         super().res_datafilecomment(comment=comment, datafile=datafile)
 
     def res_change_datafile(self, datafile: str, mode: str) -> None:
@@ -1069,4 +1111,5 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
             'w': written over
         (to) the new datafile
         """
+        # skipcq: PYL-W0235
         super().res_change_datafile(datafile=datafile, mode=mode)
