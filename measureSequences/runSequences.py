@@ -225,24 +225,24 @@ class Sequence_runner(
         """execute the specified chamber operation"""
 
         if operation == "seal immediate":
-            self.chamber_seal()
+            self._chamber_seal()
 
         if operation == "purge then seal":
-            self.chamber_purge()
-            self.chamber_seal()
+            self._chamber_purge()
+            self._chamber_seal()
 
         if operation == "vent then seal":
-            self.chamber_vent()
-            self.chamber_seal()
+            self._chamber_vent()
+            self._chamber_seal()
 
         if operation == "pump continuous":
-            self.chamber_continuous("pumping")
+            self._chamber_continuous("pumping")
 
         if operation == "vent continuous":
-            self.chamber_continuous("venting")
+            self._chamber_continuous("venting")
 
         if operation == "high vacuum":
-            self.chamber_high_vacuum()
+            self._chamber_high_vacuum()
 
     def execute_waiting(
         self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, **kwargs
@@ -484,7 +484,7 @@ class Sequence_runner(
         if ApproachMode == "Linear":
             for field in fields:
                 self._setpoint_field = field
-                self.setField(field=field, EndMode=EndMode)
+                self._setField(field=field, EndMode=EndMode)
                 self.executing_commands(commands)
 
         if ApproachMode == "No O'Shoot":
@@ -494,7 +494,7 @@ class Sequence_runner(
                     np.log, start=first, end=field, Nsteps=10
                 )
                 for t in approachFields:
-                    self.setField(field=t, EndMode="driven")
+                    self._setField(field=t, EndMode="driven")
                     # self._setpoint_field = t
                     # self.checkStable_Temp(Temp=t,
                     #                       direction=np.sign(temp - first),
@@ -503,7 +503,7 @@ class Sequence_runner(
                     self.execute_waiting(Field=True, Delay=10)
                 # self.checkStable_Temp(
                 # Temp=temp, direction=0, ApproachMode=ApproachMode)
-                # self.setFieldEndMode(EndMode=EndMode)
+                # self._setFieldEndMode(EndMode=EndMode)
                 self.executing_commands(commands)
 
         if ApproachMode == "Oscillate":
@@ -526,7 +526,7 @@ class Sequence_runner(
                 )
                 self.executing_commands(commands)
 
-        self.setFieldEndMode(EndMode=EndMode)
+        self._setFieldEndMode(EndMode=EndMode)
 
     def execute_scan_T(
         self,
@@ -564,7 +564,7 @@ class Sequence_runner(
                     np.log, start=temperatures[0], end=temp, Nsteps=10
                 )
                 for t in approachTemps:
-                    self.setTemperature(t)
+                    self._setTemperature(t)
                     # self._setpoint_temp = t
                     self.checkStable_Temp(
                         temp=t,
@@ -581,7 +581,7 @@ class Sequence_runner(
         if ApproachMode == "Fast":
             for temp in temperatures:
 
-                self.setTemperature(temp)
+                self._setTemperature(temp)
                 self.checkStable_Temp(
                     temp=temp,
                     direction=np.sign(temperatures[-1] - temperatures[0]),
@@ -663,7 +663,7 @@ class Sequence_runner(
 
         """
         if ApproachMode == "Fast":
-            self.setTemperature(temperature=Temp)
+            self._setTemperature(temperature=Temp)
         elif ApproachMode == "No O'Shoot":
             self.execute_scan_T(
                 start=self.getTemperature(),
@@ -693,7 +693,7 @@ class Sequence_runner(
             the current field to be step 1 of 2
         """
         if ApproachMode == "Fast":
-            self.setField(field=Field, EndMode=EndMode)
+            self._setField(field=Field, EndMode=EndMode)
         elif ApproachMode == "No O'Shoot":
             self.execute_scan_H(
                 start=self.getField(),
@@ -801,17 +801,6 @@ class Sequence_runner(
         should be overridden for advanced options!
         """
         self.message_to_user(f"sequence message: {message_type}: {message_direct}")
-        # skipcq: PYL-W0235
-        super().execute_sequence_message(
-            timeout_waiting_min=timeout_waiting_min,
-            message_direct=message_direct,
-            email_receiver=email_receiver,
-            email_subject=email_subject,
-            email_cc=email_cc,
-            email_message=email_message,
-            email_attachement_path=email_attachement_path,
-            message_type=message_type,
-        )
 
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
@@ -819,8 +808,7 @@ class Sequence_runner(
         default is printing to the command line
         may be overriden!
         """
-        # skipcq: PYL-W0235
-        super().message_to_user(message)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def scan_T_programSweep(
         self,
@@ -832,19 +820,11 @@ class Sequence_runner(
         SpacingCode: str = "uniform",
     ) -> None:
         """
-        Method to be overriden by a child class
+        Abstract Method
         here, the devices should be programmed to start
         the respective Sweep of temperatures
         """
-        # skipcq: PYL-W0235
-        super().scan_T_programSweep(
-            start=start,
-            end=end,
-            Nsteps=Nsteps,
-            temperatures=temperatures,
-            SweepRate=SweepRate,
-            SpacingCode=SpacingCode,
-        )
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def scan_H_programSweep(
         self,
@@ -857,20 +837,11 @@ class Sequence_runner(
         SpacingCode: str = "uniform",
     ) -> None:
         """
-        Method to be overriden by a child class
+        Abstract Method
         here, the devices should be programmed to start
         the respective Sweep for field values
         """
-        # skipcq: PYL-W0235
-        super().scan_H_programSweep(
-            start=start,
-            end=end,
-            Nsteps=Nsteps,
-            fields=fields,
-            SweepRate=SweepRate,
-            EndMode=EndMode,
-            SpacingCode=SpacingCode,
-        )
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def scan_P_programSweep(
         self,
@@ -882,100 +853,100 @@ class Sequence_runner(
         SpacingCode: str = "uniform",
     ) -> None:
         """
-        Method to be overriden by a child class
+        Abstract Method
         here, the devices should be programmed to start
         the respective Sweep of positions
         """
-        # skipcq: PYL-W0235
-        super().scan_P_programSweep(
-            start=start,
-            end=end,
-            Nsteps=Nsteps,
-            positions=positions,
-            speedindex=speedindex,
-            SpacingCode=SpacingCode,
-        )
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
-    def setField(self, field: float, EndMode: str = None) -> None:
-        """
-        Method to be overridden/injected by a child class
-        here, all logic which is needed to go to a certain field directly
-        needs to be implemented.
-        """
+    def _setField(self, field: float, EndMode: str = None) -> None:
         if EndMode is None:
             EndMode = self._setpoint_field_EndMode
         self._setpoint_field = field
-        # skipcq: PYL-W0235
         super().setField(field=field, EndMode=EndMode)
+
+    def setField(self, field: float, EndMode: str = None) -> None:
+        """
+        Abstract Method
+        here, all logic which is needed to go to a certain field directly
+        needs to be implemented.
+        """
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
+    def _setFieldEndMode(self, EndMode: str) -> bool:
+
+        self._setpoint_field_EndMode = EndMode
+        # skipcq: PYL-W0235
+        super().setFieldEndMode(EndMode=EndMode)
 
     def setFieldEndMode(self, EndMode: str) -> bool:
         """Method to be overridden by a child class
         return bool stating success or failure (optional)
         """
-        self._setpoint_field_EndMode = EndMode
-        # skipcq: PYL-W0235
-        super().setFieldEndMode(EndMode=EndMode)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
-    def setTemperature(self, temperature: float) -> None:
-        """
-        Method to be overridden/injected by a child class
-        here, all logic which is needed to go to a
-        certain temperature directly
-        needs to be implemented.
-        """
+    def _setTemperature(self, temperature: float) -> None:
         self._setpoint_temp = temperature
         # skipcq: PYL-W0235
         super().setTemperature(temperature=temperature)
 
+    def setTemperature(self, temperature: float) -> None:
+        """
+        Abstract Method
+        here, all logic which is needed to go to a
+        certain temperature directly
+        needs to be implemented.
+        """
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
     def getTemperature(self) -> float:
         """Read the temperature
 
-        Method to be overriden by child class
+        Abstract Method
         implement measuring the temperature used for control
         returns: temperature as a float
         """
-        return super().getTemperature()  # skipcq: PYL-W0235
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
+    def _setPosition(self, position: float, speedindex: int) -> None:
+        self._setpoint_pos = position
+        super().setPosition(position=position, speedindex=speedindex)
 
     def setPosition(self, position: float, speedindex: int) -> None:
         """
-        Method to be overridden/injected by a child class
+        Abstract Method
         here, all logic which is needed to go to a
         certain position directly
         needs to be implemented.
         """
-        self._setpoint_pos = position
-        # skipcq: PYL-W0235
-        super().setPosition(position=position, speedindex=speedindex)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def getPosition(self) -> float:
         """
-        Method to be overriden by child class
+        Abstract Method
         implement checking the position
 
         returns: position as a float
         """
-        # skipcq: PYL-W0235
-        return super().getPosition()
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def getField(self) -> float:
         """Read the Field
 
-        Method to be overriden by child class
+        Abstract Method
         implement measuring the field
         returns: Field as a float
         """
-        # skipcq: PYL-W0235
-        return super().getField()
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def getChamber(self):
         """Read the Chamber status
 
-        Method to be overriden by child class
+        Abstract Method
         implement measuring whether the chamber is ready
         returns: chamber status
         """
-        # skipcq: PYL-W0235
-        return super().getChamber()
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def checkStable_Temp(
         self, temp: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -1000,10 +971,7 @@ class Sequence_runner(
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        # skipcq: PYL-W0235
-        return super().checkStable_Temp(
-            temp=temp, direction=direction, ApproachMode=ApproachMode
-        )
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def checkField(
         self, field: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -1028,10 +996,7 @@ class Sequence_runner(
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        # skipcq: PYL-W0235
-        return super().checkField(
-            field=field, direction=direction, ApproachMode=ApproachMode
-        )
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def checkPosition(
         self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -1056,24 +1021,22 @@ class Sequence_runner(
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        # skipcq: PYL-W0235
-        return super().checkPosition(
-            position=position, direction=direction, ApproachMode=ApproachMode
-        )
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def Shutdown(self) -> None:
         """Shut down instruments to a safe standby-configuration"""
-        # skipcq: PYL-W0235
-        super().Shutdown()
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
-    def chamber_purge(self) -> bool:
+    def _chamber_purge(self) -> bool:
         """purge the chamber
 
         must block until the chamber is purged
         """
         self._setpoint_chamber = "purged"
-        # skipcq: PYL-W0235
         super().chamber_purge()
+
+    def chamber_purge(self) -> bool:
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def chamber_vent(self) -> bool:
         """vent the chamber
@@ -1081,19 +1044,23 @@ class Sequence_runner(
         must block until the chamber is vented
         """
         self._setpoint_chamber = "vented"
-        # skipcq: PYL-W0235
         super().chamber_vent()
 
-    def chamber_seal(self) -> bool:
+    def _chamber_vent(self) -> bool:
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
+    def _chamber_seal(self) -> bool:
         """seal the chamber
 
         must block until the chamber is sealed
         """
         self._setpoint_chamber = "sealed"
-        # skipcq: PYL-W0235
         super().chamber_seal()
 
-    def chamber_continuous(self, action) -> bool:
+    def chamber_seal(self) -> bool:
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
+    def _chamber_continuous(self, action) -> bool:
         """pump or vent the chamber continuously
         param: action:
             action = "pumping" : continuously pump
@@ -1109,7 +1076,10 @@ class Sequence_runner(
             # skipcq: PYL-W0235
             super().chamber_continuous(action=action)
 
-    def chamber_high_vacuum(self) -> bool:
+    def chamber_continuous(self, action) -> bool:
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
+    def _chamber_high_vacuum(self) -> bool:
         """pump the chamber to high vacuum
 
         must block until the chamber is  at high vacuum
@@ -1118,28 +1088,28 @@ class Sequence_runner(
         # skipcq: PYL-W0235
         super().chamber_high_vacuum()
 
+    def chamber_high_vacuum(self) -> bool:
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
+
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
         """Measure resistivity
         Must be overridden!
         return dict with all data according to the set dataflags
         this dict should be flat, just numbers, no nesting
         """
-        # skipcq: PYL-W0235
-        super().res_measure(dataflags=dataflags, bridge_conf=bridge_conf)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
         Must be overridden!
         """
-        # skipcq: PYL-W0235
-        super().measuring_store_data(data=data, datafile=datafile)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def res_datafilecomment(self, comment: str, datafile: str) -> None:
         """write a comment to the datafile
         Must be overridden!
         """
-        # skipcq: PYL-W0235
-        super().res_datafilecomment(comment=comment, datafile=datafile)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
 
     def res_change_datafile(self, datafile: str, mode: str) -> None:
         """write a comment to the datafile
@@ -1149,5 +1119,4 @@ class Sequence_runner(
             'w': written over
         (to) the new datafile
         """
-        # skipcq: PYL-W0235
-        super().res_change_datafile(datafile=datafile, mode=mode)
+        raise NotImplementedError('To use this function, it needs to be manually implemented!')
