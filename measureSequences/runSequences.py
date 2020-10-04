@@ -187,7 +187,7 @@ class Sequence_runner(
         if entry["typ"] == "remark":
             self.execute_remark(entry["text"])
         if entry["typ"] == "sequence_message":
-            self.execute_sequence_message(**entry)
+            self._execute_sequence_message(**entry)
         if entry["typ"] == "exec python multiple":
             self.execute_python(**entry)
         if entry["typ"] == "exec python":
@@ -782,7 +782,7 @@ class Sequence_runner(
         shoud be overriden in case the remark means anything"""
         self.message_to_user(f"remark: {remark}")
 
-    def execute_sequence_message(
+    def _execute_sequence_message(
         self,
         timeout_waiting_min: float,
         message_direct: str,
@@ -801,6 +801,20 @@ class Sequence_runner(
         should be overridden for advanced options!
         """
         self.message_to_user(f"sequence message: {message_type}: {message_direct}")
+        super().execute_sequence_message(
+            timeout_waiting_min=timeout_waiting_min,
+            message_direct=message_direct,
+            email_receiver=email_receiver,
+            email_subject=email_subject,
+            email_cc=email_cc,
+            email_message=email_message,
+            email_attachement_path=email_attachement_path,
+            message_type=message_type,
+        )
+
+    def execute_sequence_message(self, **kwargs):
+        """semi-Abstract Method -- override for email functionality"""
+        self._logger.info('Sequence message: {}'.format(kwargs))
 
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
