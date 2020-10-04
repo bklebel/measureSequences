@@ -17,6 +17,8 @@ from tokenize import detect_encoding
 import platform
 import os
 
+from types import FunctionType
+
 try:
     import winsound
 except ImportError:
@@ -35,6 +37,16 @@ class BreakCondition(Exception):
     """docstring for BreakCondition"""
 
     pass
+
+
+class WrappingExceptionHandlingMetaClass(type):
+    def __new__(meta, class_name, bases, classDict):
+        newClassDict = {}
+        for attributeName, attribute in classDict.items():
+            if isinstance(attribute, FunctionType):
+                attribute = ExceptionHandling(attribute)
+            newClassDict[attributeName] = attribute
+        return type.__new__(meta, class_name, bases, newClassDict)
 
 
 def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> "type(np.array())":
@@ -61,7 +73,7 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> "type(np.arra
     return mapped
 
 
-class Sequence_runner:
+class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrapping', (object,), {})):
     """docstring for Sequence_runner"""
 
     def __init__(
@@ -74,7 +86,6 @@ class Sequence_runner:
         python_default_path: str = "",
         **kwargs,
     ) -> None:
-        super().__init__(**kwargs)
         self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
         self._isRunning = True if isRunning is None else isRunning
         self._isPaused = False if isPaused is None else isPaused
@@ -104,7 +115,6 @@ class Sequence_runner:
                 return "Sequence Aborted!"
         return "Sequence Finished!"
 
-    @ExceptionHandling
     def executing_commands(self, commands: list) -> None:
         """execute all entries of the commands list"""
         for entry in commands:
@@ -136,7 +146,6 @@ class Sequence_runner:
         if not self._isRunning:
             raise BreakCondition
 
-    @ExceptionHandling
     def stop(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isRunning = False
@@ -144,7 +153,6 @@ class Sequence_runner:
         if self.subrunner:
             self.subrunner.stop()
 
-    @ExceptionHandling
     def pause(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isPaused = True
@@ -152,7 +160,6 @@ class Sequence_runner:
         if self.subrunner:
             self.subrunner.pause()
 
-    @ExceptionHandling
     def continue_(self) -> None:
         """stop the sequence execution by setting self._isRunning to False"""
         self._isPaused = False
@@ -160,7 +167,6 @@ class Sequence_runner:
         if self.subrunner:
             self.subrunner.continue_()
 
-    @ExceptionHandling
     def execute_sequence_entry(self, entry: dict) -> None:
         """execute the one entry of a list of commands"""
         self.check_running()
@@ -211,7 +217,6 @@ class Sequence_runner:
             # has yet to be implemented!
             pass
 
-    @ExceptionHandling
     def execute_chamber(self, operation: str, **kwargs) -> None:
         """execute the specified chamber operation"""
 
@@ -235,7 +240,6 @@ class Sequence_runner:
         if operation == "high vacuum":
             self.chamber_high_vacuum()
 
-    @ExceptionHandling
     def execute_waiting(
         self, Temp=False, Field=False, Position=False, Chamber=False, Delay=0, **kwargs
     ):
@@ -280,7 +284,6 @@ class Sequence_runner:
             time.sleep(delay_step)
             delay_start += delay_step
 
-    @ExceptionHandling
     def execute_beep(self, length: float, frequency: float, **kwargs) -> None:
         """beep for a certain time at a certain frequency
 
@@ -304,7 +307,6 @@ class Sequence_runner:
                 "no easily controllable beep function on mac available"
             )
 
-    @ExceptionHandling
     def wait_for(
         self, getfunc, target, threshold=0.1, additional_condition=True, **kwargs
     ) -> None:
@@ -326,7 +328,6 @@ class Sequence_runner:
             # sleep
             time.sleep(0.1)
 
-    @ExceptionHandling
     def execute_chain_sequence(self, new_file_seq: str, **kwargs) -> None:
         """execute everything from a specified sequence"""
 
@@ -348,7 +349,6 @@ class Sequence_runner:
         if done == "Sequence finished!":
             self.subrunner = None
 
-    @ExceptionHandling
     def execute_python_single(self, file: str, **kwargs) -> None:
         """execute python code directly, changable during runtime
 
@@ -374,11 +374,9 @@ class Sequence_runner:
         code = compile(fc, file, "exec")
         exec(code, globals(), locals())
 
-    @ExceptionHandling
     def execute_python(self, commands: list, **kwargs) -> None:
         self.executing_commands(commands)
 
-    @ExceptionHandling
     def execute_scan_time(
         self, time_total: float, Nsteps: int, SpacingCode: str, commands: list, **kwargs
     ) -> None:
@@ -390,8 +388,7 @@ class Sequence_runner:
             where 'set interval time' is the time given
                 by the scan_time functionality
 
-            and 'duration of all actions in command list' refers
-                @ExceptionHandlingto
+            and 'duration of all actions in command list' refers to
                 the time it takes to conduct everything which is defined
                 in the list of commands given
         else:
@@ -451,7 +448,6 @@ class Sequence_runner:
                         x.join()
                     raise BreakCondition
 
-    @ExceptionHandling
     def execute_scan_H(
         self,
         start: float,
@@ -522,13 +518,13 @@ class Sequence_runner:
             for ct, field in enumerate(fields):
                 first = fields[0] if ct == 0 else fields[ct - 1]
                 self.checkField(
-                    Field=field, direction=np.sign(field - first), ApproachMode="Sweep"
+                    field=field, direction=np.sign(field - first), ApproachMode="Sweep"
                 )
                 self.executing_commands(commands)
 
         self.setFieldEndMode(EndMode=EndMode)
 
-    # @ExceptionHandling
+
     def execute_scan_T(
         self,
         start: float,
@@ -612,7 +608,6 @@ class Sequence_runner:
 
                 self.executing_commands(commands)
 
-    @ExceptionHandling
     def execute_scan_P(
         self,
         start: float,
@@ -652,7 +647,6 @@ class Sequence_runner:
                 )
                 self.executing_commands(commands)
 
-    @ExceptionHandling
     def execute_set_Temperature(
         self, Temp: float, ApproachMode: str, SweepRate: float, **kwargs
     ) -> None:
@@ -679,7 +673,6 @@ class Sequence_runner:
                 temperatures_forced=None,
             )
 
-    @ExceptionHandling
     def execute_set_Field(
         self,
         Field: float,
@@ -710,7 +703,6 @@ class Sequence_runner:
         else:
             self.setField(field=Field, EndMode=EndMode)
 
-    @ExceptionHandling
     def execute_set_Position(
         self, position: float, speedindex: int, Mode: str, **kwargs
     ) -> None:
@@ -729,7 +721,6 @@ class Sequence_runner:
                 'Mode "redefine present position" functionality not yet implemented'
             )
 
-    @ExceptionHandling
     def execute_res_measure(
         self, dataflags: dict, reading_count: int, bridge_conf: dict, **kwargs
     ) -> None:
@@ -770,12 +761,10 @@ class Sequence_runner:
 
         self.measuring_store_data(data=values_merged, datafile=self.datafile)
 
-    @ExceptionHandling
     def execute_res_datafilecomment(self, comment: str, **kwargs) -> None:
         """execute the resistivity: datafile-comment command"""
         self.res_datafilecomment(comment=comment, datafile=self.datafile)
 
-    @ExceptionHandling
     def execute_res_change_datafile(
         self, new_file_data: str, mode: str, **kwargs
     ) -> None:
@@ -783,14 +772,12 @@ class Sequence_runner:
         self.datafile = new_file_data
         self.res_change_datafile(datafile=new_file_data, mode=mode)
 
-    @ExceptionHandling
     def execute_remark(self, remark: str, **kwargs) -> None:
         """use the given remark
 
         shoud be overriden in case the remark means anything"""
         self.message_to_user(f"remark: {remark}")
 
-    @ExceptionHandling
     def execute_sequence_message(
         self,
         timeout_waiting_min: float,
@@ -810,18 +797,14 @@ class Sequence_runner:
         should be overridden for advanced options!"""
         self.message_to_user(f"sequence message: {message_type}: {message_direct}")
 
-    @ExceptionHandling
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
 
-        @ExceptionHandling
             default is printing to the command line
             may be overriden!
         """
         super().message_to_user(message)
-        # print(message)
 
-    @ExceptionHandling
     def scan_T_programSweep(
         self,
         start: float,
@@ -836,9 +819,8 @@ class Sequence_runner:
         here, the devices should be programmed to start
         the respective Sweep of temperatures
         """
-        raise NotImplementedError
+        super().scan_T_programSweep(start=start, end=end, Nsteps=Nsteps, temperatures=temperatures, SweepRate=SweepRate, SpacingCode=SpacingCode)
 
-    @ExceptionHandling
     def scan_H_programSweep(
         self,
         start: float,
@@ -854,9 +836,8 @@ class Sequence_runner:
         here, the devices should be programmed to start
         the respective Sweep for field values
         """
-        raise NotImplementedError
+        super().scan_H_programSweep(start=start, end=end, Nsteps=Nsteps, fields=fields, SweepRate=SweepRate, EndMode=EndMode, SpacingCode=SpacingCode)
 
-    @ExceptionHandling
     def scan_P_programSweep(
         self,
         start: float,
@@ -871,41 +852,34 @@ class Sequence_runner:
         here, the devices should be programmed to start
         the respective Sweep of positions
         """
-        raise NotImplementedError
+        super().scan_P_programSweep(start=start, end=end, Nsteps=Nsteps, positions=positions, speedindex=speedindex, SpacingCode=SpacingCode)
 
-    @ExceptionHandling
     def setField(self, field: float, EndMode: str) -> None:
         """
         Method to be overridden/injected by a child class
         here, all logic which is needed to go to a certain field directly
         needs to be implemented.
-        TODO: override method
         """
         self._setpoint_field = field
         super().setField(field=field, EndMode=EndMode)
-        # raise NotImplementedError
 
-    @ExceptionHandling
     def setFieldEndMode(self, EndMode: str) -> bool:
         """Method to be overridden by a child class
         return bool stating success or failure (optional)
         """
-        raise NotImplementedError
+        self._setpoint_field_EndMode = EndMode
+        super().setFieldEndMode(EndMode=EndMode)
 
-    @ExceptionHandling
     def setTemperature(self, temperature: float) -> None:
         """
         Method to be overridden/injected by a child class
         here, all logic which is needed to go to a
         certain temperature directly
         needs to be implemented.
-        TODO: override method
         """
         self._setpoint_temp = temperature
         super().setTemperature(temperature=temperature)
-        # raise NotImplementedError
 
-    @ExceptionHandling
     def getTemperature(self) -> float:
         """Read the temperature
 
@@ -913,22 +887,18 @@ class Sequence_runner:
         implement measuring the temperature used for control
         returns: temperature as a float
         """
-        raise NotImplementedError
+        return super.getTemperature()
 
-    @ExceptionHandling
     def setPosition(self, position: float, speedindex: int) -> None:
         """
         Method to be overridden/injected by a child class
         here, all logic which is needed to go to a
         certain position directly
         needs to be implemented.
-        TODO: override method
         """
-        # self._setpoint_pos = position
-        # super().setPosition(position=position, speedindex=speedindex)
-        raise NotImplementedError
+        self._setpoint_pos = position
+        super().setPosition(position=position, speedindex=speedindex)
 
-    @ExceptionHandling
     def getPosition(self) -> float:
         """
         Method to be overriden by child class
@@ -936,9 +906,8 @@ class Sequence_runner:
 
         returns: position as a float
         """
-        raise NotImplementedError
+        return super().getPosition()
 
-    @ExceptionHandling
     def getField(self) -> float:
         """Read the Field
 
@@ -946,9 +915,8 @@ class Sequence_runner:
         implement measuring the field
         returns: Field as a float
         """
-        raise NotImplementedError
+        return super().getField()
 
-    @ExceptionHandling
     def getChamber(self):
         """Read the Chamber status
 
@@ -956,9 +924,8 @@ class Sequence_runner:
         implement measuring whether the chamber is ready
         returns: chamber status
         """
-        raise NotImplementedError
+        return super().getChamber()
 
-    @ExceptionHandling
     def checkStable_Temp(
         self, temp: float, direction: int = 0, ApproachMode: str = "Sweep"
     ) -> bool:
@@ -971,8 +938,7 @@ class Sequence_runner:
 
         param: direction:
             indicates whether the 'Temp' should currently be
-                rising or fallin
-                    @ExceptionHandlingg
+                rising or falling
                 direction =  0: default, no information / non-sweeping
                 direction =  1: temperature should be rising
                 direction = -1: temperature should be falling
@@ -983,23 +949,21 @@ class Sequence_runner:
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        raise NotImplementedError
+        return super().checkStable_Temp(temp=temp, direction=direction, ApproachMode=ApproachMode)
 
-    @ExceptionHandling
     def checkField(
-        self, Field: float, direction: int = 0, ApproachMode: str = "Sweep"
+        self, field: float, direction: int = 0, ApproachMode: str = "Sweep"
     ) -> bool:
         """check whether the Field has passed a certain value
 
-        param: Field:
+        param: field:
             the field which needs to be arrived to continue
             function must block until the field has reached this value!
             (apart from checking whether the sequence qas aborted)
 
         param: direction:
             indicates whether the 'Field' should currently be
-                rising or fallin
-                    @ExceptionHandlingg
+                rising or falling
                 direction =  0: default, no information / non-sweeping
                 direction =  1: temperature should be rising
                 direction = -1: temperature should be falling
@@ -1010,9 +974,8 @@ class Sequence_runner:
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        raise NotImplementedError
+        return super.().checkField(field=Field, direction=direction, ApproachMode=ApproachMode)
 
-    @ExceptionHandling
     def checkPosition(
         self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
     ) -> bool:
@@ -1025,8 +988,7 @@ class Sequence_runner:
 
         param: direction:
             indicates whether the 'Position' should currently be
-                rising or fallin
-                    @ExceptionHandlingg
+                rising or falling
                 direction =  0: default, no information / non-sweeping
                 direction =  1: position value should be rising
                 direction = -1: position value should be falling
@@ -1037,30 +999,27 @@ class Sequence_runner:
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        raise NotImplementedError
+        return super().checkPosition(position=position, direction=direction, ApproachMode=ApproachMode)
 
-    @ExceptionHandling
     def Shutdown(self) -> None:
         """Shut down instruments to a safe standby-configuration"""
-        raise NotImplementedError
+        super().Shutdown()
 
-    @ExceptionHandling
     def chamber_purge(self) -> bool:
         """purge the chamber
 
         must block until the chamber is purged
         """
-        raise NotImplementedError
+        super().chamber_purge()
 
-    @ExceptionHandling
     def chamber_vent(self) -> bool:
         """vent the chamber
 
         must block until the chamber is vented
         """
+        super().chamber_vent()
         raise NotImplementedError
 
-    @ExceptionHandling
     def chamber_seal(self) -> bool:
         """seal the chamber
 
@@ -1068,7 +1027,6 @@ class Sequence_runner:
         """
         raise NotImplementedError
 
-    @ExceptionHandling
     def chamber_continuous(self, action) -> bool:
         """pump or vent the chamber continuously"""
         if action == "pumping":
@@ -1076,7 +1034,6 @@ class Sequence_runner:
         if action == "venting":
             raise NotImplementedError
 
-    @ExceptionHandling
     def chamber_high_vacuum(self) -> bool:
         """pump the chamber to high vacuum
 
@@ -1084,7 +1041,6 @@ class Sequence_runner:
         """
         raise NotImplementedError
 
-    @ExceptionHandling
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
         """Measure resistivity
         Must be overridden!
@@ -1093,21 +1049,18 @@ class Sequence_runner:
         """
         raise NotImplementedError
 
-    @ExceptionHandling
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
         Must be overridden!
         """
         raise NotImplementedError
 
-    @ExceptionHandling
     def res_datafilecomment(self, comment: str, datafile: str) -> None:
         """write a comment to the datafile
         Must be overridden!
         """
         raise NotImplementedError
 
-    @ExceptionHandling
     def res_change_datafile(self, datafile: str, mode: str) -> None:
         """write a comment to the datafile
         Must be overridden!
