@@ -26,17 +26,12 @@ except ImportError:
 
 from .Sequence_parsing import Sequence_parser
 from .util import ExceptionHandling
+from .util import BreakCondition
 
 import logging
 
 logger = logging.getLogger("measureSequences.Sequence_runner")
 logger.addHandler(logging.NullHandler())
-
-
-class BreakCondition(Exception):
-    """docstring for BreakCondition"""
-
-    pass
 
 
 class WrappingExceptionHandlingMetaClass(type):
@@ -524,7 +519,6 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         self.setFieldEndMode(EndMode=EndMode)
 
-
     def execute_scan_T(
         self,
         start: float,
@@ -854,12 +848,14 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         """
         super().scan_P_programSweep(start=start, end=end, Nsteps=Nsteps, positions=positions, speedindex=speedindex, SpacingCode=SpacingCode)
 
-    def setField(self, field: float, EndMode: str) -> None:
+    def setField(self, field: float, EndMode: str = None) -> None:
         """
         Method to be overridden/injected by a child class
         here, all logic which is needed to go to a certain field directly
         needs to be implemented.
         """
+        if EndMode is None:
+            EndMode = self._setpoint_field_EndMode
         self._setpoint_field = field
         super().setField(field=field, EndMode=EndMode)
 
@@ -1018,28 +1014,32 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         must block until the chamber is vented
         """
         super().chamber_vent()
-        raise NotImplementedError
 
     def chamber_seal(self) -> bool:
         """seal the chamber
 
         must block until the chamber is sealed
         """
-        raise NotImplementedError
+        super().chamber_seal()
 
     def chamber_continuous(self, action) -> bool:
-        """pump or vent the chamber continuously"""
+        """pump or vent the chamber continuously
+        param: action:
+            action = "pumping" : continuously pump
+            action = "venting" : continuously vent
+
+        """
         if action == "pumping":
-            raise NotImplementedError
+            super().chamber_continuous(action=action)
         if action == "venting":
-            raise NotImplementedError
+            super().chamber_continuous(action=action)
 
     def chamber_high_vacuum(self) -> bool:
         """pump the chamber to high vacuum
 
         must block until the chamber is  at high vacuum
         """
-        raise NotImplementedError
+        super().chamber_high_vacuum()
 
     def res_measure(self, dataflags: dict, bridge_conf: dict) -> dict:
         """Measure resistivity
@@ -1047,19 +1047,19 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         return dict with all data according to the set dataflags
         this dict should be flat, just numbers, no nesting
         """
-        raise NotImplementedError
+        super().res_measure(dataflags=dataflags, bridge_conf=bridge_conf)
 
     def measuring_store_data(self, data: dict, datafile: str) -> None:
         """Store measured data
         Must be overridden!
         """
-        raise NotImplementedError
+        super().measuring_store_data(data=data, datafile=datafile)
 
     def res_datafilecomment(self, comment: str, datafile: str) -> None:
         """write a comment to the datafile
         Must be overridden!
         """
-        raise NotImplementedError
+        super()res_datafilecomment(comment=comment, datafile=datafile)
 
     def res_change_datafile(self, datafile: str, mode: str) -> None:
         """write a comment to the datafile
@@ -1069,4 +1069,4 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
             'w': written over
         (to) the new datafile
         """
-        raise NotImplementedError
+        super().res_change_datafile(datafile=datafile, mode=mode)

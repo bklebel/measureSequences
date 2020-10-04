@@ -37,6 +37,12 @@ logger = logging.getLogger("measureSequences.utility")
 logger.addHandler(logging.NullHandler())
 
 
+class BreakCondition(Exception):
+    """docstring for BreakCondition"""
+
+    pass
+
+
 def ExceptionSignal(thread, func, e_type, err):
     """Emit assertion-signal with relevant information"""
     try:
@@ -46,7 +52,7 @@ def ExceptionSignal(thread, func, e_type, err):
     string = "{}: {}: {}: {}".format(
         thread.__class__.__name__, func.__name__, e_type, errmessage
     )
-    return string
+    return string, errmessage
 
 
 def ExceptionHandling(func):
@@ -57,50 +63,53 @@ def ExceptionHandling(func):
         try:
             return func(*args, **kwargs)
         except AssertionError as e:
-            s = ExceptionSignal(args[0], func, "Assertion", e)
+            s, _ = ExceptionSignal(args[0], func, "Assertion", e)
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
 
         except TypeError as e:
-            s = ExceptionSignal(args[0], func, "Type", e)
+            s, _ = ExceptionSignal(args[0], func, "Type", e)
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
 
         except KeyError as e:
-            s = ExceptionSignal(args[0], func, "Key", e)
+            s, _ = ExceptionSignal(args[0], func, "Key", e)
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
 
         except IndexError as e:
-            s = ExceptionSignal(args[0], func, "Index", e)
+            s, _ = ExceptionSignal(args[0], func, "Index", e)
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
 
         except ValueError as e:
-            s = ExceptionSignal(args[0], func, "Value", e)
+            s, _ = ExceptionSignal(args[0], func, "Value", e)
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
 
         except AttributeError as e:
-            s = ExceptionSignal(args[0], func, "Attribute", e)
+            s, errmessage = ExceptionSignal(args[0], func, "Attribute", e)
+            if errmessage.startswith("'super' object"):
+                args[0]._logger.error('if you want to use the method %s you will have to implement it yourself!', func.__name__)
+                raise BreakCondition('Function not implemented!')
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
 
         except NotImplementedError as e:
-            s = ExceptionSignal(args[0], func, "NotImplemented", e)
+            s, _ = ExceptionSignal(args[0], func, "NotImplemented", e)
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
             # e.args = [str(e)]
 
         except OSError as e:
-            s = ExceptionSignal(args[0], func, "OSError", e)
+            s, _ = ExceptionSignal(args[0], func, "OSError", e)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
         # else:

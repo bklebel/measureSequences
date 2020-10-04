@@ -406,13 +406,11 @@ class Sequence_parser:
     @staticmethod
     def displaytext_res_scan_exc(data: dict) -> str:
         """generate the displaytext for an excitation scan"""
-        # TODO - finish this up
         return "Scanning RES Excitation"
 
     @staticmethod
     def displaytext_res(data: dict) -> str:
         """generate the displaytext for the resistivity measurement"""
-        # TODO - finish this up
         text = "Resistivity "
         chans = []
         chans.append("Ch1 ")
