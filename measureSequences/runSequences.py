@@ -1059,7 +1059,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         """write a comment to the datafile
         Must be overridden!
         """
-        super()res_datafilecomment(comment=comment, datafile=datafile)
+        super().res_datafilecomment(comment=comment, datafile=datafile)
 
     def res_change_datafile(self, datafile: str, mode: str) -> None:
         """write a comment to the datafile
