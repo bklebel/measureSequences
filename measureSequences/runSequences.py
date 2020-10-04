@@ -974,7 +974,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        return super.().checkField(field=Field, direction=direction, ApproachMode=ApproachMode)
+        return super().checkField(field=field, direction=direction, ApproachMode=ApproachMode)
 
     def checkPosition(
         self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
