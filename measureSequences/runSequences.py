@@ -73,7 +73,9 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> "type(np.arra
     return mapped
 
 
-class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrapping', (object,), {})):
+class Sequence_runner(
+    WrappingExceptionHandlingMetaClass("Sequence_runner_wrapping", (object,), {})
+):
     """docstring for Sequence_runner"""
 
     def __init__(
@@ -524,7 +526,6 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
 
         self.setFieldEndMode(EndMode=EndMode)
 
-
     def execute_scan_T(
         self,
         start: float,
@@ -800,8 +801,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
     def message_to_user(self, message: str) -> None:
         """deliver a message to a user in some way
 
-            default is printing to the command line
-            may be overriden!
+        default is printing to the command line
+        may be overriden!
         """
         super().message_to_user(message)
 
@@ -819,7 +820,14 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         here, the devices should be programmed to start
         the respective Sweep of temperatures
         """
-        super().scan_T_programSweep(start=start, end=end, Nsteps=Nsteps, temperatures=temperatures, SweepRate=SweepRate, SpacingCode=SpacingCode)
+        super().scan_T_programSweep(
+            start=start,
+            end=end,
+            Nsteps=Nsteps,
+            temperatures=temperatures,
+            SweepRate=SweepRate,
+            SpacingCode=SpacingCode,
+        )
 
     def scan_H_programSweep(
         self,
@@ -836,7 +844,15 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         here, the devices should be programmed to start
         the respective Sweep for field values
         """
-        super().scan_H_programSweep(start=start, end=end, Nsteps=Nsteps, fields=fields, SweepRate=SweepRate, EndMode=EndMode, SpacingCode=SpacingCode)
+        super().scan_H_programSweep(
+            start=start,
+            end=end,
+            Nsteps=Nsteps,
+            fields=fields,
+            SweepRate=SweepRate,
+            EndMode=EndMode,
+            SpacingCode=SpacingCode,
+        )
 
     def scan_P_programSweep(
         self,
@@ -852,7 +868,14 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         here, the devices should be programmed to start
         the respective Sweep of positions
         """
-        super().scan_P_programSweep(start=start, end=end, Nsteps=Nsteps, positions=positions, speedindex=speedindex, SpacingCode=SpacingCode)
+        super().scan_P_programSweep(
+            start=start,
+            end=end,
+            Nsteps=Nsteps,
+            positions=positions,
+            speedindex=speedindex,
+            SpacingCode=SpacingCode,
+        )
 
     def setField(self, field: float, EndMode: str) -> None:
         """
@@ -949,7 +972,9 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        return super().checkStable_Temp(temp=temp, direction=direction, ApproachMode=ApproachMode)
+        return super().checkStable_Temp(
+            temp=temp, direction=direction, ApproachMode=ApproachMode
+        )
 
     def checkField(
         self, field: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -974,7 +999,9 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        return super().checkField(field=field, direction=direction, ApproachMode=ApproachMode)
+        return super().checkField(
+            field=field, direction=direction, ApproachMode=ApproachMode
+        )
 
     def checkPosition(
         self, position: float, direction: int = 0, ApproachMode: str = "Sweep"
@@ -999,7 +1026,9 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         method should be overriden - possibly some convenience functionality
             will be added in the future
         """
-        return super().checkPosition(position=position, direction=direction, ApproachMode=ApproachMode)
+        return super().checkPosition(
+            position=position, direction=direction, ApproachMode=ApproachMode
+        )
 
     def Shutdown(self) -> None:
         """Shut down instruments to a safe standby-configuration"""
