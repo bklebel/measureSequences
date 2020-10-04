@@ -703,6 +703,8 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
                 SweepRate=SweepRate,
                 EndMode=EndMode,
                 ApproachMode=ApproachMode,
+                commands=[],
+                SpacingCode="uniform",
             )
 
     def execute_set_Position(
@@ -901,8 +903,7 @@ class Sequence_runner(WrappingExceptionHandlingMetaClass('Sequence_runner_wrappi
         implement measuring the temperature used for control
         returns: temperature as a float
         """
-        # skipcq: PYL-W0235
-        return super().getTemperature()
+        return super().getTemperature()  # skipcq: PYL-W0235
 
     def setPosition(self, position: float, speedindex: int) -> None:
         """
