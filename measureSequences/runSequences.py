@@ -555,8 +555,6 @@ class Sequence_runner(
             elif SpacingCode == "logT":
                 temperatures = mapping_tofunc(np.log, start, end, Nsteps)
 
-        # scanning through the temperatures:
-
         # approaching very slowly:
         if ApproachMode == "No O'Shoot":
             for temp in temperatures:
@@ -565,7 +563,6 @@ class Sequence_runner(
                 )
                 for t in approachTemps:
                     self._setTemperature(t)
-                    # self._setpoint_temp = t
                     self.checkStable_Temp(
                         temp=t,
                         direction=np.sign(temperatures[-1] - temperatures[0]),
