@@ -32,10 +32,12 @@ from .util import BreakCondition
 # ################## necessary for python measuring scripts  ###################
 import pandas as pd
 import numpy as np
+
 # ##############################################################################
 
 
 import logging
+
 logger = logging.getLogger("measureSequences.Sequence_runner")
 logger.addHandler(logging.NullHandler())
 
