@@ -75,7 +75,8 @@ def mapping_tofunc(func, start: float, end: float, Nsteps: int) -> "type(np.arra
 
 
 class Sequence_runner(
-    WrappingExceptionHandlingMetaClass("Sequence_runner_wrapping", (object,), {})
+    # WrappingExceptionHandlingMetaClass("Sequence_runner_wrapping", (object,), {})
+    metaclass=WrappingExceptionHandlingMetaClass,
 ):
     """docstring for Sequence_runner"""
 
@@ -89,7 +90,8 @@ class Sequence_runner(
         python_default_path: str = "",
         **kwargs,
     ) -> None:
-        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
+        super().__init__(**kwargs)
+        self._logger = logging.getLogger("measureSequences." + __name__ + "." + self.__class__.__name__)
         self._isRunning = True if isRunning is None else isRunning
         self._isPaused = False if isPaused is None else isPaused
         self.sequence = sequence
