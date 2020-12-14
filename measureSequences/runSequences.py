@@ -32,10 +32,12 @@ from .util import BreakCondition
 # ################## necessary for python measuring scripts  ###################
 import pandas as pd
 import numpy as np
+
 # ##############################################################################
 
 
 import logging
+
 logger = logging.getLogger("measureSequences.Sequence_runner")
 logger.addHandler(logging.NullHandler())
 
@@ -91,7 +93,9 @@ class Sequence_runner(
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self._logger = logging.getLogger("measureSequences." + __name__ + "." + self.__class__.__name__)
+        self._logger = logging.getLogger(
+            "measureSequences." + __name__ + "." + self.__class__.__name__
+        )
         self._isRunning = True if isRunning is None else isRunning
         self._isPaused = False if isPaused is None else isPaused
         self.sequence = sequence
