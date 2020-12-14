@@ -112,6 +112,19 @@ def ExceptionHandling(func):
             s, _ = ExceptionSignal(args[0], func, "OSError", e)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
+
+        except NameError as e:
+            s, _ = ExceptionSignal(args[0], func, "Name", e)
+            # thread.logger.exception(s)
+            args[0]._logger.error(s)
+            args[0]._logger.exception(e)
+
+        except Exception as e:
+            s, _ = ExceptionSignal(args[0], func, "SOMETHING", e)
+            args[0]._logger.critical(s)
+            args[0]._logger.exception(e)
+
+
         # else:
         #     args[0]._logger.warning('There is a bug!! ' + func.__name__)
 
