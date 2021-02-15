@@ -894,7 +894,7 @@ class Sequence_runner(
         if EndMode is None:
             EndMode = self._setpoint_field_EndMode
         self._setpoint_field = field
-        super().setField(field=field, EndMode=EndMode)
+        self.setField(field=field, EndMode=EndMode)
 
     def setField(self, field: float, EndMode: str = None) -> None:
         """
@@ -910,7 +910,7 @@ class Sequence_runner(
 
         self._setpoint_field_EndMode = EndMode
         # skipcq: PYL-W0235
-        super().setFieldEndMode(EndMode=EndMode)
+        self.setFieldEndMode(EndMode=EndMode)
 
     def setFieldEndMode(self, EndMode: str) -> bool:
         """Method to be overridden by a child class
@@ -923,7 +923,7 @@ class Sequence_runner(
     def _setTemperature(self, temperature: float) -> None:
         self._setpoint_temp = temperature
         # skipcq: PYL-W0235
-        super().setTemperature(temperature=temperature)
+        self.setTemperature(temperature=temperature)
 
     def setTemperature(self, temperature: float) -> None:
         """
@@ -949,7 +949,7 @@ class Sequence_runner(
 
     def _setPosition(self, position: float, speedindex: int) -> None:
         self._setpoint_pos = position
-        super().setPosition(position=position, speedindex=speedindex)
+        self.setPosition(position=position, speedindex=speedindex)
 
     def setPosition(self, position: float, speedindex: int) -> None:
         """
@@ -1088,7 +1088,7 @@ class Sequence_runner(
         must block until the chamber is purged
         """
         self._setpoint_chamber = "purged"
-        super().chamber_purge()
+        self.chamber_purge()
 
     def chamber_purge(self) -> bool:
         raise NotImplementedError(
@@ -1101,7 +1101,7 @@ class Sequence_runner(
         must block until the chamber is vented
         """
         self._setpoint_chamber = "vented"
-        super().chamber_vent()
+        self.chamber_vent()
 
     def _chamber_vent(self) -> bool:
         raise NotImplementedError(
@@ -1114,7 +1114,7 @@ class Sequence_runner(
         must block until the chamber is sealed
         """
         self._setpoint_chamber = "sealed"
-        super().chamber_seal()
+        self.chamber_seal()
 
     def chamber_seal(self) -> bool:
         raise NotImplementedError(
@@ -1131,11 +1131,11 @@ class Sequence_runner(
         if action == "pumping":
             self._setpoint_chamber = "continuous pumping"
             # skipcq: PYL-W0235
-            super().chamber_continuous(action=action)
+            self.chamber_continuous(action=action)
         if action == "venting":
             self._setpoint_chamber = "continuous venting"
             # skipcq: PYL-W0235
-            super().chamber_continuous(action=action)
+            self.chamber_continuous(action=action)
 
     def chamber_continuous(self, action) -> bool:
         raise NotImplementedError(
@@ -1149,7 +1149,7 @@ class Sequence_runner(
         """
         self._setpoint_chamber = "high-vacuum"
         # skipcq: PYL-W0235
-        super().chamber_high_vacuum()
+        self.chamber_high_vacuum()
 
     def chamber_high_vacuum(self) -> bool:
         raise NotImplementedError(
