@@ -95,8 +95,11 @@ def ExceptionHandling(func):
         except AttributeError as e:
             s, errmessage = ExceptionSignal(args[0], func, "Attribute", e)
             if errmessage.startswith("'super' object"):
-                args[0]._logger.error('if you want to use the method -- %s -- \n\t you will have to implement it yourself!', func.__name__)
-                raise BreakCondition('Function not implemented!')
+                args[0]._logger.error(
+                    "if you want to use the method -- %s -- \n\t you will have to implement it yourself!",
+                    func.__name__,
+                )
+                raise BreakCondition("Function not implemented!")
             # thread.logger.exception(s)
             args[0]._logger.error(s)
             args[0]._logger.exception(e)
@@ -123,7 +126,6 @@ def ExceptionHandling(func):
             s, _ = ExceptionSignal(args[0], func, "SOMETHING", e)
             args[0]._logger.critical(s)
             args[0]._logger.exception(e)
-
 
         # else:
         #     args[0]._logger.warning('There is a bug!! ' + func.__name__)
