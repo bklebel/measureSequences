@@ -177,7 +177,13 @@ class Dummy(Sequence_runner, Dummy_Functions):
         return val
 
     def checkStable_Temp(
-        self, temp: float, direction: int = 0, ApproachMode: str = "Sweep", timeout=0, *args, **kwargs,
+        self,
+        temp: float,
+        direction: int = 0,
+        ApproachMode: str = "Sweep",
+        timeout=0,
+        *args,
+        **kwargs,
     ) -> bool:
         """wait for the temperature to stabilize
 
