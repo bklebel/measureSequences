@@ -996,7 +996,11 @@ class Sequence_runner(
         )
 
     def checkStable_Temp(
-        self, temp: float, direction: int = 0, ApproachMode: str = "Sweep"
+        self,
+        temp: float,
+        direction: int = 0,
+        ApproachMode: str = "Sweep",
+        timeout: float = 0,
     ) -> bool:
         """wait for the temperature to stabilize
 
@@ -1015,8 +1019,18 @@ class Sequence_runner(
         param: ApproachMode:
             specifies the mode of approach in the scan this function is called
 
+        param: timeout:
+            float [s]
+            if timeout is exceeded, blocking behavior of the method is lifted,
+                return value should be False if timeout is exceeded
+                to be used with direction 0
+                if set to 0, timeout is infinite, method blocks until stability
+                is reached
+
         method should be overriden - possibly some convenience functionality
             will be added in the future
+
+        returns True if stability has been reached
         """
         raise NotImplementedError(
             "To use this function, it needs to be manually implemented!"
