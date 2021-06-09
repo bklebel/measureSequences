@@ -617,8 +617,21 @@ class Sequence_runner(
                     direction=np.sign(temperatures[-1] - temperatures[0]),
                     ApproachMode="Sweep",
                 )
-
                 self.executing_commands(commands)
+
+                """
+                in case the last temperature has been reached,
+                but additional steps had been scheduled, discard
+                the additional steps (i.e. superfluous cycles)
+                and continue with any next command
+                """
+                if self.checkStable_Temp(
+                    temp=temp,
+                    direction=0,
+                    ApproachMode="Fast",
+                    timeout=0.1,
+                ):
+                    break
 
     def execute_scan_P(
         self,
