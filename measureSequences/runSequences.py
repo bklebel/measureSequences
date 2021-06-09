@@ -626,7 +626,7 @@ class Sequence_runner(
                 and continue with any next command
                 """
                 if self.checkStable_Temp(
-                    temp=temp,
+                    temp=temperatures[-1],
                     direction=0,
                     ApproachMode="Fast",
                     timeout=0.1,
