@@ -177,7 +177,7 @@ class Dummy(Sequence_runner, Dummy_Functions):
         return val
 
     def checkStable_Temp(
-        self, temp: float, direction: int = 0, ApproachMode: str = "Sweep"
+        self, temp: float, direction: int = 0, ApproachMode: str = "Sweep", timeout=0, *args, **kwargs,
     ) -> bool:
         """wait for the temperature to stabilize
 
@@ -200,11 +200,12 @@ class Dummy(Sequence_runner, Dummy_Functions):
             will be added in the future
         """
         print(
-            f"checkstable_Temp :: Temp: {temp} is stable!, ApproachMode = {ApproachMode}, direction = {direction}"
+            f"checkstable_Temp :: Temp: {temp} is stable!, ApproachMode = {ApproachMode}, direction = {direction}, timeout = {timeout}, args, kwargs: {args}, {kwargs}"
         )
+        return True
 
     def checkField(
-        self, Field: float, direction: int = 0, ApproachMode: str = "Sweep"
+        self, field: float, direction: int = 0, ApproachMode: str = "Sweep"
     ) -> bool:
         """check whether the Field has passed a certain value
 
@@ -227,7 +228,7 @@ class Dummy(Sequence_runner, Dummy_Functions):
             will be added in the future
         """
         print(
-            f"checkField :: Field: {Field} is stable!, ApproachMode = {ApproachMode}, direction = {direction}"
+            f"checkField :: field: {field} is stable!, ApproachMode = {ApproachMode}, direction = {direction}"
         )
 
     def checkPosition(
