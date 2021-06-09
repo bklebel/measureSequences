@@ -182,7 +182,6 @@ class Dummy(Sequence_runner, Dummy_Functions):
         direction: int = 0,
         ApproachMode: str = "Sweep",
         timeout=0,
-        *args,
         **kwargs,
     ) -> bool:
         """wait for the temperature to stabilize
@@ -206,7 +205,7 @@ class Dummy(Sequence_runner, Dummy_Functions):
             will be added in the future
         """
         print(
-            f"checkstable_Temp :: Temp: {temp} is stable!, ApproachMode = {ApproachMode}, direction = {direction}, timeout = {timeout}, args, kwargs: {args}, {kwargs}"
+            f"checkstable_Temp :: Temp: {temp} is stable!, ApproachMode = {ApproachMode}, direction = {direction}, timeout = {timeout}, kwargs: {kwargs}"
         )
         return True
 

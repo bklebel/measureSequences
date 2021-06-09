@@ -1014,6 +1014,7 @@ class Sequence_runner(
         direction: int = 0,
         ApproachMode: str = "Sweep",
         timeout: float = 0,
+        **kwargs,
     ) -> bool:
         """wait for the temperature to stabilize
 
