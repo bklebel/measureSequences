@@ -491,7 +491,7 @@ class Sequence_runner(
             fields = mapping_tofunc(lambda x: 1 / x, start, end, Nsteps)
 
         elif SpacingCode == "H^1/2":
-            fields = mapping_tofunc(lambda x: x ** 0.5, start, end, Nsteps)
+            fields = mapping_tofunc(lambda x: x**0.5, start, end, Nsteps)
 
         if ApproachMode == "Linear":
             for field in fields:
